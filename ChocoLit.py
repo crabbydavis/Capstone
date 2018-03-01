@@ -17,7 +17,9 @@ CHOC_PUMP_BOT = 36
 FILLIG_EXT = 32
 FILLING_RET = 26
 CHOC_PUMP_TOP = 24
-#26, 24, 22
+CUT_EXT = 22
+CUT_RET = 18
+#16 12 ARE STILL AVAILABLE ON THE OE SIDE
 
 # Setup the GPIO pins
 GPIO.setup(ACTUATOR_RET, GPIO.OUT)
@@ -44,7 +46,7 @@ class TestPanel(wx.Panel):
         #b.SetDefault()
         #b.SetSize(b.GetBestSize())
 
-        b = wx.Button(self, 20, "Reset Actuator", (20, 140))
+        b = wx.Button(self, 20, "Retract Actuator", (20, 140))
         self.Bind(wx.EVT_BUTTON, self.RetractActuator, b)
         #b.SetToolTip("This is a Hello button...")
         
