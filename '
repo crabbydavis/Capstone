@@ -39,7 +39,6 @@ class Example(wx.Frame):
 
         # Define All of the Buttons that need to be added
         start_button = wx.Button(self, label="START")
-        start_button.SetBackgroundColour('#42f465')
         self.Bind(wx.EVT_BUTTON, self.Start_event, start_button)
         emergencyStop_button = wx.Button(self, label="EMERGENCY STOP")
         emergencyStop_button.SetBackgroundColour('#f44242')
