@@ -1,0 +1,108 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+# calculator.py
+
+import wx
+
+class Example(wx.Frame):
+  
+    def __init__(self, parent, title):
+        super(Example, self).__init__(parent, title=title, 
+            size=(300, 250))
+            
+        self.InitUI()
+        self.Move((0, 0))
+        self.Maximize()
+        self.Show()     
+        
+    def InitUI(self):
+    
+        menubar = wx.MenuBar()
+        fileMenu = wx.Menu()
+        menubar.Append(fileMenu, '&File')
+        self.SetMenuBar(menubar)
+
+        # Define All of the Buttons that need to be added
+        start_button = wx.Button(self, label="START")
+        self.Bind(wx.EVT_BUTTON, self.Start_event, start_button)
+        emergencyStop_button = wx.Button(self, label="EMERGENCY STOP")
+        self.Bind(wx.EVT_BUTTON, self.Start_event, emergencyStop_button)
+
+        # Actuator
+        extendActuator_button = wx.Button(self, label="Extend Actuator")
+        self.Bind(wx.EVT_BUTTON, self.Start_event, extendActuator_button)
+        retractActuator_button = wx.Button(self, label="Retract Actuator")
+        self.Bind(wx.EVT_BUTTON, self.Start_event, retractActuator_button)
+        stopActuator_button = wx.Button(self, label="Stop Actuator")
+        self.Bind(wx.EVT_BUTTON, self.Start_event, stopActuator_button)
+        
+        # Chocolate Pump 1
+        runChocPump1_button = wx.Button(self, label="Run Chocolate Pump 1")
+        self.Bind(wx.EVT_BUTTON, self.Start_event, runChocPump1_button)
+        stopChocPump1_button = wx.Button(self, label="Stop Chocolate Pump 1")
+        self.Bind(wx.EVT_BUTTON, self.Start_event, stopChocPump1_button)
+
+        # Filling Extruder
+        extendExtruder_button = wx.Button(self, label="Extend Extruder")
+        self.Bind(wx.EVT_BUTTON, self.Start_event, extendExtruder_button)
+        retractExtruder_button = wx.Button(self, label="Retract Extruder")
+        self.Bind(wx.EVT_BUTTON, self.Start_event, retractExtruder_button)
+        stopExtruder_button = wx.Button(self, label="Stop Extruder")
+        self.Bind(wx.EVT_BUTTON, self.Start_event, stopExtruder_button)
+
+        # Worm Gear
+        extendWorm_button = wx.Button(self, label="Extend Piano Wire")
+        self.Bind(wx.EVT_BUTTON, self.Start_event, extendWorm_button)
+        retractWorm_button = wx.Button(self, label="Retract Piano Wire")
+        self.Bind(wx.EVT_BUTTON, self.Start_event, retractWorm_button)
+        stopWorm_button = wx.Button(self, label="Stop Piano Wire")
+        self.Bind(wx.EVT_BUTTON, self.Start_event, stopWorm_button)
+
+        # Chocolate Pump 2
+        runChocPump2_button = wx.Button(self, label="Run Chocolate Pump 2")
+        self.Bind(wx.EVT_BUTTON, self.Start_event, runChocPump2_button)
+        stopChocPump2_button = wx.Button(self, label="Stop Chocolate Pump 2")
+        self.Bind(wx.EVT_BUTTON, self.Start_event, stopChocPump2_button)
+
+        # Setup the display to be a grid of all of the buttons
+        vbox = wx.BoxSizer(wx.VERTICAL)
+        #self.display = wx.TextCtrl(self, style=wx.TE_RIGHT)
+        #vbox.Add(self.display, flag=wx.EXPAND|wx.TOP|wx.BOTTOM, border=4)
+        gs = wx.GridSizer(4, 5, 5, 5)
+
+        gs.AddMany( [(wx.StaticText(self), wx.EXPAND),
+            (start_button, 0, wx.EXPAND),
+            (wx.StaticText(self), wx.EXPAND),
+            (emergencyStop_button, 0, wx.EXPAND),
+            (wx.StaticText(self), wx.EXPAND),
+            # Second Row
+            (extendActuator_button, 0, wx.EXPAND),
+            (runChocPump1_button, 0, wx.EXPAND),
+            (extendExtruder_button, 0, wx.EXPAND),
+            (extendWorm_button, 0, wx.EXPAND),
+            (runChocPump2_button, 0, wx.EXPAND),
+            # Third Row
+            (retractActuator_button, 0, wx.EXPAND),
+            (wx.StaticText(self), wx.EXPAND),
+            (retractExtruder_button, 0, wx.EXPAND),
+            (retractWorm_button, 0, wx.EXPAND),
+            (wx.StaticText(self), wx.EXPAND),
+            # Fourth Row
+            (stopActuator_button, 0, wx.EXPAND),
+            (stopChocPump1_button, 0, wx.EXPAND),
+            (stopExtruder_button, 0, wx.EXPAND),
+            (stopWorm_button, 0, wx.EXPAND),
+            (stopChocPump2_button, 0, wx.EXPAND) ])
+
+        vbox.Add(gs, proportion=1, flag=wx.EXPAND)
+        self.SetSizer(vbox)
+
+    def Start_event(self, event):
+        print ("Hello, Python!")
+
+if __name__ == '__main__':
+  
+    app = wx.App()
+    Example(None, title='Calculator')
+    app.MainLoop()
