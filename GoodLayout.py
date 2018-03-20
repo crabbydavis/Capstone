@@ -1,13 +1,12 @@
 #!/usr/bin/python
-# -*- coding: utf-8 -*-
-
+# -*- coding: utf-8 -*
 # choclateFactory.py
 
 import wx
 import time
-from enum import Enum, auto
 from threading import Thread
-#import RPi.#GPIO as #GPIO
+import RPi.GPIO as GPIO
+from enum import Enum
 
 # The following variabes should be considered costants
 
@@ -25,23 +24,36 @@ CUT_EXT = 22
 CUT_RET = 18
 #16 12 ARE STILL AVAILABLE ON THE ONE SIDE
 
+class State(Enum):
+    INIT = 1 
+    START1 = 2
+    START2 = 3
+    RUN = 4
+    END2 = 5
+    END1 = 6
+    FINISH = 7 
+
+current_st = State.INIT
+
+onoff = True
+
 # Set numbering mode for the program
-#GPIO.setmode(#GPIO.BOARD)
+GPIO.setmode(GPIO.BOARD)
 
 # Setup the GPIO pins
-#GPIO.setup(ACTUATOR_RET, GPIO.OUT)
-#GPIO.setup(ACTUATOR_EXT, GPIO.OUT)
-#GPIO.setup(CHOC_PUMP_1, GPIO.OUT)
-#GPIO.setup(FILLIG_EXT, GPIO.OUT)
-#GPIO.setup(FILLING_RET, GPIO.OUT)
-#GPIO.setup(CHOC_PUMP_2, GPIO.OUT)
+GPIO.setup(ACTUATOR_RET, GPIO.OUT)
+GPIO.setup(ACTUATOR_EXT, GPIO.OUT)
+GPIO.setup(CHOC_PUMP_1, GPIO.OUT)
+GPIO.setup(FILLIG_EXT, GPIO.OUT)
+GPIO.setup(FILLING_RET, GPIO.OUT)
+GPIO.setup(CHOC_PUMP_2, GPIO.OUT)
 
-#GPIO.output(ACTUATOR_RET, GPIO.HIGH)
-#GPIO.output(ACTUATOR_EXT, GPIO.HIGH)
-#GPIO.output(CHOC_PUMP_1, GPIO.HIGH)
-#GPIO.output(FILLIG_EXT, GPIO.HIGH)
-#GPIO.output(FILLING_RET, GPIO.HIGH)
-#GPIO.output(CHOC_PUMP_2, GPIO.HIGH)
+GPIO.output(ACTUATOR_RET, GPIO.HIGH)
+GPIO.output(ACTUATOR_EXT, GPIO.HIGH)
+GPIO.output(CHOC_PUMP_1, GPIO.HIGH)
+GPIO.output(FILLIG_EXT, GPIO.HIGH)
+GPIO.output(FILLING_RET, GPIO.HIGH)
+GPIO.output(CHOC_PUMP_2, GPIO.HIGH)
 
 class Popup(wx.PopupWindow):
     def __init__(self, parent, style):
@@ -59,7 +71,7 @@ class Popup(wx.PopupWindow):
 
 class Main(wx.Frame):
     def __init__(self, parent, title):
-        super(Example, self).__init__(parent, title=title, 
+        super(Main, self).__init__(parent, title=title, 
             size=(300, 250))
             
         self.InitUI()
@@ -67,24 +79,40 @@ class Main(wx.Frame):
         self.Maximize()
         self.Show()     
         
+    #start_button = wx.Button(self, label="START")
+    
     def InitUI(self):
-        # The following is the code for a menu bar
+       # The following is the code for a menu bar
         #menubar = wx.MenuBar()
         #fileMenu = wx.Menu()
         #menubar.Append(fileMenu, '&File')
         #self.SetMenuBar(menubar)
 
+        #def Start_event(self, event):
+            #win = Popup(self.GetTopLevelParent(), wx.SIMPLE_BORDER)
+
+            #btn = event.GetEventObject()
+            #pos = btn.ClientToScreen( (0,0) )
+            #sz =  btn.GetSize()
+            #win.Position(pos, (0, sz[1]))
+            #time.sleep(.1) # Have a slight delay before the popup shows
+            #win.Show(True)
+            #thread = Thread(target = threaded_function, args = (win,))
+            #thread.start()
+            #extendActuator_button.SetBackgroundColour('#42f465')
+            #thread.join()
+
         # Define All of the Buttons that need to be added
         start_button = wx.Button(self, label="START")
         start_button.SetBackgroundColour('#42f465')
-        self.Bind(wx.EVT_BUTTON, self.Start_event, start_button)
+        self.Bind(wx.EVT_BUTTON, Start_event, start_button)
         emergencyStop_button = wx.Button(self, label="EMERGENCY STOP")
         emergencyStop_button.SetBackgroundColour('#f44242')
         self.Bind(wx.EVT_BUTTON, self.Start_event, emergencyStop_button)
 
         # Actuator
         extendActuator_button = wx.Button(self, label="Extend Actuator")
-        self.Bind(wx.EVT_BUTTON, self.extendAcutator, extendActuator_button)
+        self.Bind(wx.EVT_BUTTON, self.extendActuator, extendActuator_button)
         retractActuator_button = wx.Button(self, label="Retract Actuator")
         self.Bind(wx.EVT_BUTTON, self.Start_event, retractActuator_button)
         stopActuator_button = wx.Button(self, label="Stop Actuator")
@@ -151,19 +179,22 @@ class Main(wx.Frame):
         vbox.Add(gs, proportion=1, flag=wx.EXPAND)
         self.SetSizer(vbox)
 
-    def Start_event(self, event):
-        win = Popup(self.GetTopLevelParent(), wx.SIMPLE_BORDER)
+        def Start_event(self, event):
+            win = Popup(self.GetTopLevelParent(), wx.SIMPLE_BORDER)
 
-        btn = event.GetEventObject()
-        pos = btn.ClientToScreen( (0,0) )
-        sz =  btn.GetSize()
-        win.Position(pos, (0, sz[1]))
-        time.sleep(.1) # Have a slight delay before the popup shows
-        win.Show(True)
-        thread = Thread(target = threaded_function, args = (win,))
-        thread.start()
-        #thread.join()
-
+            btn = event.GetEventObject()
+            pos = btn.ClientToScreen( (0,0) )
+            sz =  btn.GetSize()
+            win.Position(pos, (0, sz[1]))
+            time.sleep(.1) # Have a slight delay before the popup shows
+            win.Show(True)
+            thread = Thread(target = threaded_function, args = (win,))
+            thread.start()
+            extendActuator_button.SetBackgroundColour('#42f465')
+            thread.join()
+	    while True:	current_st	
+		
+	
     # The following are the vairous states that the factory can be in
     #################################################################
     def init_st():
@@ -214,80 +245,95 @@ class Main(wx.Frame):
     def runChocPump1():
         runTime = 5
         sleep_time = STAGE_TIME - runTime
-        #GPIO.output(CHOC_PUMP_1, GPIO.LOW)
+        GPIO.output(CHOC_PUMP_1, GPIO.LOW)
         time.sleep(run_time) # Number of seconds that the pi will sleep
-        #GPIO.output(CHOC_PUMP_1, GPIO.HIGH)
+        GPIO.output(CHOC_PUMP_1, GPIO.HIGH)
         time.sleep(sleep_time)
 
     def runFilling():
         fillingRunTime = 5
         cutTime = 2
         sleep_time = STAGE_TIME - fillingRunTime - cutTime * 2
-        #GPIO.output(FILLIG_EXT, GPIO.LOW)
+        GPIO.output(FILLIG_EXT, GPIO.LOW)
         time.sleep(fillingRunTime) # Number of seconds that the pi will sleep
-        #GPIO.output(FILLIG_EXT, GPIO.HIGH)
-        #GPIO.ouptut(CUT_EXT, GPIO.LOW)
+        GPIO.output(FILLIG_EXT, GPIO.HIGH)
+        GPIO.ouptut(CUT_EXT, GPIO.LOW)
         time.sleep(cutTime)
-        #GPIO.ouptut(CUT_EXT, GPIO.HIGH)
-        #GPIO.ouptut(CUT_RET, GPIO.LOW)
+        GPIO.ouptut(CUT_EXT, GPIO.HIGH)
+        GPIO.ouptut(CUT_RET, GPIO.LOW)
         time.sleep(cutTime)
-        #GPIO.ouptut(CUT_RET, GPIO.HIGH)
+        GPIO.ouptut(CUT_RET, GPIO.HIGH)
         time.sleep(sleep_time)
 
     def runChocPump2():
         runTime = 5
         sleep_time = STAGE_TIME - runTime
-        #GPIO.output(CHOC_PUMP_2, GPIO.LOW)
+        GPIO.output(CHOC_PUMP_2, GPIO.LOW)
         time.sleep(run_time) # Number of seconds that the pi will sleep
-        #GPIO.output(CHOC_PUMP_2, GPIO.HIGH)
+        GPIO.output(CHOC_PUMP_2, GPIO.HIGH)
         time.sleep(sleep_time)
     #################################################################
 
     # Functions to control individual components
     #################################################################
-    def extendActuator(self, event, gpio):
-        #GPIO.output(ACTUATOR_EXT, #GPIO.LOW)
-        #GPIO.output(ACTUATOR_RET, #GPIO.HIGH)
-        #print(gpio)
-        #time.sleep(3)
+    def extendActuator(self, event):
+        GPIO.output(ACTUATOR_EXT, GPIO.LOW)
+        GPIO.output(ACTUATOR_RET, GPIO.HIGH)
+        time.sleep(3)
         
     def retractActuator(self, event):
-        #GPIO.output(ACTUATOR_RET, #GPIO.LOW)
-        #GPIO.output(ACTUATOR_EXT, #GPIO.HIGH)
+        GPIO.output(ACTUATOR_RET, GPIO.LOW)
+        GPIO.output(ACTUATOR_EXT, GPIO.HIGH)
         time.sleep(3)
 
     def stopActuator(self, event):
-        #GPIO.output(ACTUATOR_RET, #GPIO.HIGH)
-        #GPIO.output(ACTUATOR_EXT, #GPIO.HIGH)
+        GPIO.output(ACTUATOR_RET, GPIO.HIGH)
+        GPIO.output(ACTUATOR_EXT, GPIO.HIGH)
     
     def runChocPump1():
+        GPIO.output(ACTUATOR_RET, GPIO.HIGH)
+        GPIO.output(ACTUATOR_EXT, GPIO.HIGH)
 
     def stopChocPump1():
+        GPIO.output(ACTUATOR_RET, GPIO.HIGH)
+        GPIO.output(ACTUATOR_EXT, GPIO.HIGH)
 
     def extendExtruder():
-    
+        GPIO.output(ACTUATOR_RET, GPIO.HIGH)
+        GPIO.output(ACTUATOR_EXT, GPIO.HIGH)
+   
     def retractExtruder():
+        GPIO.output(ACTUATOR_RET, GPIO.HIGH)
+        GPIO.output(ACTUATOR_EXT, GPIO.HIGH)
 
     def stopExtruder():
+        GPIO.output(ACTUATOR_RET, GPIO.HIGH)
+        GPIO.output(ACTUATOR_EXT, GPIO.HIGH)
 
     def extendWorm():
+        GPIO.output(ACTUATOR_RET, GPIO.HIGH)
+        GPIO.output(ACTUATOR_EXT, GPIO.HIGH)
 
     def retractWorm():
+        GPIO.output(ACTUATOR_RET, GPIO.HIGH)
+        GPIO.output(ACTUATOR_EXT, GPIO.HIGH)
 
     def stopWorm():
+        GPIO.output(ACTUATOR_RET, GPIO.HIGH)
+        GPIO.output(ACTUATOR_EXT, GPIO.HIGH)
 
     def emergencyStop(self, event):
-        #GPIO.output(ACTUATOR_EXT, #GPIO.HIGH)
-        #GPIO.output(ACTUATOR_RET, #GPIO.HIGH)
-        #GPIO.output(CHOC_PUMP_1, #GPIO.HIGH)
-        #GPIO.output(FILLIG_EXT, #GPIO.HIGH)
-        #GPIO.output(FILLING_RET, #GPIO.HIGH)
-        #GPIO.output(CHOC_PUMP_2, #GPIO.HIGH)
-        #GPIO.output(CUT_EXT, #GPIO.HIGH)
-        #GPIO.output(CUT_RET, #GPIO.HIGH)
+        GPIO.output(ACTUATOR_EXT, GPIO.HIGH)
+        GPIO.output(ACTUATOR_RET, GPIO.HIGH)
+        GPIO.output(CHOC_PUMP_1, GPIO.HIGH)
+        GPIO.output(FILLIG_EXT, GPIO.HIGH)
+        GPIO.output(FILLING_RET, GPIO.HIGH)
+        GPIO.output(CHOC_PUMP_2, GPIO.HIGH)
+        GPIO.output(CUT_EXT, GPIO.HIGH)
+        GPIO.output(CUT_RET, GPIO.HIGH)
 
         # Make sure all molds with chocolate in them get pushed out
-        for i in range(0, MAX_MOLDS)
+        for i in range(0, MAX_MOLDS):
             self.extendActuator
             self.retractActuator
 
