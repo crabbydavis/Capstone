@@ -2,7 +2,9 @@
 
 from state import State
 import time
+import wx
 from wx.lib.pubsub import pub
+
 
 ACTIVE_COLOR = '#42f48c'
 INACTIVE_COLOR = '#f7f7f7'
@@ -149,7 +151,9 @@ def runChocPump2(self):
 def extendActuator(arg):
     print("extendActuator")
     #gpio.output(ACTUATOR_EXT, #gpio.LOW)
-    arg.extendActuator_button.SetBackgroundColour(ACTIVE_COLOR)
+    #arg.extendActuator_button.SetBackgroundColour(ACTIVE_COLOR)
+    # Tell the GUI about them
+    wx.CallAfter(pub.sendMessage, "EXTEND_ACTUATOR", color = ACTIVE_COLOR)
     time.sleep(5)
     #gpio.output(ACTUATOR_RET, #gpio.HIGH)
     arg.extendActuator_button.SetBackgroundColour(INACTIVE_COLOR)
@@ -162,4 +166,6 @@ def retractActuator(self):
     #gpio.output(ACTUATOR_EXT, #gpio.HIGH)
     self.retractActuator_button.SetBackgroundColour(INACTIVE_COLOR)
     time.sleep(.3)
+
+
 # End of our states.

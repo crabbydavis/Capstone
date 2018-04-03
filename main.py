@@ -75,7 +75,7 @@ class Main(wx.Frame):
         self.Show()     
 
         # Subscribe to events for changing the color of buttons
-        pub.subscribe(self.OnNewLabels, "EXTEND_ACTUATOR")
+        pub.subscribe(self.setExtendActuatorColor, "EXTEND_ACTUATOR")
             
     def InitUI(self):
         # Define All of the Buttons that need to be added
@@ -157,104 +157,16 @@ class Main(wx.Frame):
 
     def startFactory(self, event):
         self.start_button.SetBackgroundColour(ACTIVE_COLOR)
+        self.extendActuator_button.SetBackgroundColour(ACTIVE_COLOR)
         thread = Thread(target = runChocolateFactory, args = (self,))
         thread.start()
-
-        
-        #ChocolateFactory.on_event(self, 'start')
-        #result = [current_st]
-        #while True:
-            #current_st = arg[1].options[current_st](arg[1])
-            #thread = Thread(target = self.options[result[0]]([self, result, runFactory]), args = (self,))
-            #thread.start()
-            #thread.join()
-            #pool = ThreadPool(processes=1)
-            #async_result = pool.apply_async(self.options[current_st]([self, current_st, runFactory]), ('world', 'foo')) # tuple of args for foo
-            #result = async_result.get()  # get the return value from your function.
-        #thread = Thread(target = threaded_function, args = ([current_st,self],)
-        #thread.start()
 	
 	#################################################################
-    # The following are the vairous states that the factory can be in
+    # The following are the functions for changing the button colors
     #################################################################
-    def init_st(arg=None):
-        runTime = 5
-        #current_st = arg[1]
-        print("In the init_st")
-        #sleep_time = STAGE_TIME - runTime
-        current_st = State.START1
-        #arg[1][0] = State.START1
-        return current_st
-
-    def start1_st(arg=None):
-        print("In start1_st")
-        #main = arg[0] 
-        arg.extendActuator()
-        arg.runChocPump1()
-        arg.retractActuator()
-        current_st = State.START2
-        #arg[1][0] = State.START2
-        return current_st
-    
-    def start2_st(arg=None):
-        print("In start2_st")
-        #main = arg[0] 
-        arg.extendActuator()
-        arg.runChocPump1()
-        arg.runFilling()
-        arg.retractActuator()
-        current_st = State.RUN
-        #arg[1][0] = State.RUN
-        return current_st
-
-    def run_st(arg=None):
-        print("In run_st")
-        #main = arg[0] 
-        runFactory = arg[2]
-        arg.extendActuator()
-        arg.runChocPump1()
-        arg.runFilling()
-        arg.runChocPump2()
-        arg.retractActuator()
-        if runFactory:
-            current_st = State.RUN
-            #arg[1][0] = State.RUN
-        else:
-            current_st = State.END2
-            #arg[1][0] = State.END2
-        return current_st
-
-    def end2_st(arg=None):
-        print("In end2_st")
-        arg.extendActuator()
-        arg.runFilling()
-        arg.runChocPump2()
-        arg.retractActuator()
-        current_st = State.END1
-        return current_st
-
-    def end1_st(arg=None):
-        print("In end1_st")
-        arg.extendActuator()
-        arg.runChocPump2()
-        arg.retractActuator()
-        current_st = State.FINISH
-        return current_st
-
-    def finish_st(arg=None):
-        print("In finish_st")
-        current_st = State.FINISH
-        return current_st
-
-    options = {
-        State.INIT : init_st,
-        State.START1 : start1_st,
-        State.START2 : start2_st,
-        State.RUN : run_st,
-        State.END2 : end2_st,
-        State.END1 : end1_st,
-        State.FINISH : finish_st
-    }
+    def setExtendActuatorColor(self, color):
+        print("Trying to change ext act color")
+        self.extendActuator_button.SetBackgroundColour(color)
 
     #################################################################
     # Functions for running the chocolate processes of the machine
@@ -376,6 +288,7 @@ class Main(wx.Frame):
           #  self.retractActuator
 
     #################################################################
+
 def runChocolateFactory(arg):
     print('runChocolateFactory')
     #print(arg)
@@ -389,17 +302,6 @@ def runChocolateFactory(arg):
         factory.on_event(factoryEvent, arg)
         if factoryEvent == 'start':
             factoryEvent = 'run'
-
-def threaded_function(arg):
-    #arg.Show(False)
-    current_st = arg[0]
-    while True:
-        current_st = arg[1].options[current_st](arg[1])
-    
-    print("runFactory must be false")
-    #current_st = arg[1].options[current_st](arg[1])
-    #current_st = arg[1].options[current_st](arg[1])
-    #current_st = arg[1].options[current_st](arg[1])
 
 if __name__ == '__main__':
   
