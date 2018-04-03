@@ -7,6 +7,10 @@ import time
 from threading import Thread
 #import RPi.#gpio as #gpio
 from enum import Enum
+from multiprocessing.pool import ThreadPool
+from chocolate_factory import ChocolateFactory
+from state import State
+from wx.lib.pubsub import pub
 
 # The following variabes should be considered costants
 
@@ -39,8 +43,8 @@ class State(Enum):
 
 current_st = State.INIT
 
-onoff = True
-
+runFactory = False
+factoryEvent = ''
 # Set numbering mode for the program
 #gpio.setmode(#gpio.BOARD)
 
@@ -59,21 +63,8 @@ onoff = True
 #gpio.output(FILLING_RET, #gpio.HIGH)
 #gpio.output(CHOC_PUMP_2, #gpio.HIGH)
 
-class Popup(wx.PopupWindow):
-    def __init__(self, parent, style):
-        wx.PopupWindow.__init__(self, parent, style)
-
-        panel = wx.Panel(self)
-        self.panel = panel
-        panel.SetBackgroundColour("CADET BLUE")
-
-        st = wx.StaticText(panel, -1, "Factory Started!", pos=(-1,-1))
-        self.SetSize(200,50)
-        #self.CenterOnParent()
-        panel.SetSize(200,50)
-        wx.CallAfter(self.Refresh)
-
 class Main(wx.Frame):
+    #state = State()
     def __init__(self, parent, title):
         super(Main, self).__init__(parent, title=title, 
             size=(300, 250))
@@ -82,71 +73,54 @@ class Main(wx.Frame):
         self.Move((0, 0))
         self.Maximize()
         self.Show()     
+
+        # Subscribe to events for changing the color of buttons
+        pub.subscribe(self.OnNewLabels, "EXTEND_ACTUATOR")
             
     def InitUI(self):
-       # The following is the code for a menu bar
-        #menubar = wx.MenuBar()
-        #fileMenu = wx.Menu()
-        #menubar.Append(fileMenu, '&File')
-        #self.SetMenuBar(menubar)
-
-        #def Start_event(self, event):
-            #win = Popup(self.GetTopLevelParent(), wx.SIMPLE_BORDER)
-
-            #btn = event.GetEventObject()
-            #pos = btn.ClientToScreen( (0,0) )
-            #sz =  btn.GetSize()
-            #win.Position(pos, (0, sz[1]))
-            #time.sleep(.1) # Have a slight delay before the popup shows
-            #win.Show(True)
-            #thread = Thread(target = threaded_function, args = (win,))
-            #thread.start()
-            #extendActuator_button.SetBackgroundColour('#42f465')
-            #thread.join()
-
         # Define All of the Buttons that need to be added
         self.start_button = wx.Button(self, label="START")
         self.start_button.SetBackgroundColour('#42f465')
-        self.Bind(wx.EVT_BUTTON, self.Start_event, self.start_button)
+        self.Bind(wx.EVT_BUTTON, self.startFactory, self.start_button)
         emergencyStop_button = wx.Button(self, label="EMERGENCY STOP")
         emergencyStop_button.SetBackgroundColour('#f44242')
-        self.Bind(wx.EVT_BUTTON, self.Start_event, emergencyStop_button)
+        self.Bind(wx.EVT_BUTTON, self.emergencyStop, emergencyStop_button)
 
         # Actuator
         self.extendActuator_button = wx.Button(self, label="Extend Actuator")
         self.Bind(wx.EVT_BUTTON, self.extendActuator, self.extendActuator_button)
         self.retractActuator_button = wx.Button(self, label="Retract Actuator")
-        self.Bind(wx.EVT_BUTTON, self.Start_event, self.retractActuator_button)
+        self.Bind(wx.EVT_BUTTON, self.retractActuator, self.retractActuator_button)
         self.stopActuator_button = wx.Button(self, label="Stop Actuator")
-        self.Bind(wx.EVT_BUTTON, self.Start_event, self.stopActuator_button)
+        self.Bind(wx.EVT_BUTTON, self.stopActuator, self.stopActuator_button)
         
         # Chocolate Pump 1
         self.runChocPump1_button = wx.Button(self, label="Run Choc. Pump 1")
-        self.Bind(wx.EVT_BUTTON, self.Start_event, self.runChocPump1_button)
+        self.Bind(wx.EVT_BUTTON, self.startFactory, self.runChocPump1_button)
         self.stopChocPump1_button = wx.Button(self, label="Stop Choc. Pump 1")
-        self.Bind(wx.EVT_BUTTON, self.Start_event, self.stopChocPump1_button)
+        self.Bind(wx.EVT_BUTTON, self.startFactory, self.stopChocPump1_button)
 
         # Filling Extruder
         self.extendExtruder_button = wx.Button(self, label="Extend Extruder")
-        self.Bind(wx.EVT_BUTTON, self.Start_event, self.extendExtruder_button)
+        self.Bind(wx.EVT_BUTTON, self.startFactory, self.extendExtruder_button)
         self.retractExtruder_button = wx.Button(self, label="Retract Extruder")
-        self.Bind(wx.EVT_BUTTON, self.Start_event, self.retractExtruder_button)
+        self.Bind(wx.EVT_BUTTON, self.startFactory, self.retractExtruder_button)
         self.stopExtruder_button = wx.Button(self, label="Stop Extruder")
-        self.Bind(wx.EVT_BUTTON, self.Start_event, self.stopExtruder_button)
+        self.Bind(wx.EVT_BUTTON, self.startFactory, self.stopExtruder_button)
 
         # Worm Gear
         self.extendWorm_button = wx.Button(self, label="Extend Piano Wire")
-        self.Bind(wx.EVT_BUTTON, self.Start_event, self.extendWorm_button)
+        self.Bind(wx.EVT_BUTTON, self.startFactory, self.extendWorm_button)
         self.retractWorm_button = wx.Button(self, label="Retract Piano Wire")
-        self.Bind(wx.EVT_BUTTON, self.Start_event, self.retractWorm_button)
+        self.Bind(wx.EVT_BUTTON, self.startFactory, self.retractWorm_button)
         self.stopWorm_button = wx.Button(self, label="Stop Piano Wire")
-        self.Bind(wx.EVT_BUTTON, self.Start_event, self.stopWorm_button)
+        self.Bind(wx.EVT_BUTTON, self.startFactory, self.stopWorm_button)
 
         # Chocolate Pump 2
         self.runChocPump2_button = wx.Button(self, label="Run Choc. Pump 2")
-        self.Bind(wx.EVT_BUTTON, self.Start_event, self.runChocPump2_button)
+        self.Bind(wx.EVT_BUTTON, self.startFactory, self.runChocPump2_button)
         self.stopChocPump2_button = wx.Button(self, label="Stop Choc. Pump 2")
-        self.Bind(wx.EVT_BUTTON, self.Start_event, self.stopChocPump2_button)
+        self.Bind(wx.EVT_BUTTON, self.startFactory, self.stopChocPump2_button)
 
         # Setup the display to be a grid of all of the buttons
         vbox = wx.BoxSizer(wx.VERTICAL)
@@ -181,58 +155,77 @@ class Main(wx.Frame):
         vbox.Add(gs, proportion=1, flag=wx.EXPAND)
         self.SetSizer(vbox)
 
-    def Start_event(self, event):
-        #win = Popup(self.GetTopLevelParent(), wx.SIMPLE_BORDER)
-        #btn = event.GetEventObject()
-        #pos = btn.ClientToScreen( (0,0) )
-        #sz =  btn.GetSize()
-        #win.Position(pos, (0, sz[1]))
-        #time.sleep(.1) # Have a slight delay before the popup shows
-        #win.Show(True)
+    def startFactory(self, event):
         self.start_button.SetBackgroundColour(ACTIVE_COLOR)
-        thread = Thread(target = threaded_function, args = ([current_st,self],))
+        thread = Thread(target = runChocolateFactory, args = (self,))
         thread.start()
-        #thread.join()
-	    #while True:	current_st	
-		
+
+        
+        #ChocolateFactory.on_event(self, 'start')
+        #result = [current_st]
+        #while True:
+            #current_st = arg[1].options[current_st](arg[1])
+            #thread = Thread(target = self.options[result[0]]([self, result, runFactory]), args = (self,))
+            #thread.start()
+            #thread.join()
+            #pool = ThreadPool(processes=1)
+            #async_result = pool.apply_async(self.options[current_st]([self, current_st, runFactory]), ('world', 'foo')) # tuple of args for foo
+            #result = async_result.get()  # get the return value from your function.
+        #thread = Thread(target = threaded_function, args = ([current_st,self],)
+        #thread.start()
+	
 	#################################################################
     # The following are the vairous states that the factory can be in
     #################################################################
     def init_st(arg=None):
         runTime = 5
+        #current_st = arg[1]
         print("In the init_st")
         #sleep_time = STAGE_TIME - runTime
         current_st = State.START1
+        #arg[1][0] = State.START1
         return current_st
 
     def start1_st(arg=None):
-        print("In the start1_st")
+        print("In start1_st")
+        #main = arg[0] 
         arg.extendActuator()
         arg.runChocPump1()
         arg.retractActuator()
         current_st = State.START2
+        #arg[1][0] = State.START2
         return current_st
     
     def start2_st(arg=None):
-        print("In the start2_st")
+        print("In start2_st")
+        #main = arg[0] 
         arg.extendActuator()
         arg.runChocPump1()
         arg.runFilling()
         arg.retractActuator()
         current_st = State.RUN
+        #arg[1][0] = State.RUN
         return current_st
 
     def run_st(arg=None):
-        print("In the run_st")
+        print("In run_st")
+        #main = arg[0] 
+        runFactory = arg[2]
         arg.extendActuator()
         arg.runChocPump1()
         arg.runFilling()
         arg.runChocPump2()
         arg.retractActuator()
-        current_st = State.END2
+        if runFactory:
+            current_st = State.RUN
+            #arg[1][0] = State.RUN
+        else:
+            current_st = State.END2
+            #arg[1][0] = State.END2
         return current_st
 
     def end2_st(arg=None):
+        print("In end2_st")
         arg.extendActuator()
         arg.runFilling()
         arg.runChocPump2()
@@ -241,6 +234,7 @@ class Main(wx.Frame):
         return current_st
 
     def end1_st(arg=None):
+        print("In end1_st")
         arg.extendActuator()
         arg.runChocPump2()
         arg.retractActuator()
@@ -248,6 +242,7 @@ class Main(wx.Frame):
         return current_st
 
     def finish_st(arg=None):
+        print("In finish_st")
         current_st = State.FINISH
         return current_st
 
@@ -266,7 +261,7 @@ class Main(wx.Frame):
     #################################################################
     def runChocPump1(self):
         print("runChocPump1")
-        runTime = 5
+        runTime = .5
         #sleep_time = STAGE_TIME - runTime
         #gpio.output(CHOC_PUMP_1, #gpio.LOW)
         self.runChocPump1_button.SetBackgroundColour(ACTIVE_COLOR)
@@ -276,8 +271,8 @@ class Main(wx.Frame):
         #time.sleep(sleep_time)
 
     def runFilling(self):
-        fillingRunTime = 5
-        cutTime = 2
+        fillingRunTime = .5
+        cutTime = .2
         #sleep_time = STAGE_TIME - fillingRunTime - cutTime * 2
         #gpio.output(FILLIG_EXT, #gpio.LOW)
         self.extendExtruder_button.SetBackgroundColour(ACTIVE_COLOR)
@@ -297,11 +292,11 @@ class Main(wx.Frame):
         #time.sleep(sleep_time)
 
     def runChocPump2(self):
-        runTime = 5
+        runTime = .5
         #sleep_time = STAGE_TIME - runTime
         #gpio.output(CHOC_PUMP_2, #gpio.LOW)
         self.runChocPump2_button.SetBackgroundColour(ACTIVE_COLOR)
-        time.sleep(run_time) # Number of seconds that the pi will sleep
+        time.sleep(runTime) # Number of seconds that the pi will sleep
         #gpio.output(CHOC_PUMP_2, #gpio.HIGH)
         self.runChocPump2_button.SetBackgroundColour(INACTIVE_COLOR)
         #time.sleep(sleep_time)
@@ -315,7 +310,7 @@ class Main(wx.Frame):
         self.extendActuator_button.SetBackgroundColour(ACTIVE_COLOR)
         #gpio.output(ACTUATOR_RET, #gpio.HIGH)
         self.retractActuator_button.SetBackgroundColour(INACTIVE_COLOR)
-        time.sleep(3)
+        time.sleep(.3)
         
     def retractActuator(self):
         print("retractActuator")
@@ -323,7 +318,7 @@ class Main(wx.Frame):
         self.retractActuator_button.SetBackgroundColour(ACTIVE_COLOR)
         #gpio.output(ACTUATOR_EXT, #gpio.HIGH)
         self.extendActuator_button.SetBackgroundColour(INACTIVE_COLOR)
-        time.sleep(3)
+        time.sleep(.3)
 
     def stopActuator():
         #gpio.output(ACTUATOR_RET, #gpio.HIGH)
@@ -363,6 +358,7 @@ class Main(wx.Frame):
         #gpio.output(ACTUATOR_EXT, #gpio.HIGH)
         time.sleep(3)
     def emergencyStop(self, event):
+        global factoryEvent
         #gpio.output(ACTUATOR_EXT, #gpio.HIGH)
         #gpio.output(ACTUATOR_RET, #gpio.HIGH)
         #gpio.output(CHOC_PUMP_1, #gpio.HIGH)
@@ -371,22 +367,39 @@ class Main(wx.Frame):
         #gpio.output(CHOC_PUMP_2, #gpio.HIGH)
         #gpio.output(CUT_EXT, #gpio.HIGH)
         #gpio.output(CUT_RET, #gpio.HIGH)
-
+        runFactory = False
+        factoryEvent = 'finish'
+        print('Emergency Stop Pushed')
         # Make sure all molds with chocolate in them get pushed out
-        for i in range(0, MAX_MOLDS):
-            self.extendActuator
-            self.retractActuator
+        #for i in range(0, MAX_MOLDS):
+         #   self.extendActuator
+          #  self.retractActuator
 
-        onoff = False
     #################################################################
+def runChocolateFactory(arg):
+    print('runChocolateFactory')
+    #print(arg)
+    #arg.extendActuator_button.SetBackgroundColour(ACTIVE_COLOR)
+    global factoryEvent
+    factory = ChocolateFactory()
+    runFactory = True
+    #factory = ChocolateFactory()
+    factoryEvent = 'start'
+    while runFactory:
+        factory.on_event(factoryEvent, arg)
+        if factoryEvent == 'start':
+            factoryEvent = 'run'
 
 def threaded_function(arg):
-    time.sleep(3)
     #arg.Show(False)
     current_st = arg[0]
     while True:
         current_st = arg[1].options[current_st](arg[1])
-
+    
+    print("runFactory must be false")
+    #current_st = arg[1].options[current_st](arg[1])
+    #current_st = arg[1].options[current_st](arg[1])
+    #current_st = arg[1].options[current_st](arg[1])
 
 if __name__ == '__main__':
   
