@@ -4,17 +4,41 @@ from state import State
 import time
 import wx
 from wx.lib.pubsub import pub
-
+import RPi.GPIO as GPIO 
 
 ACTIVE_COLOR = '#42f48c'
 INACTIVE_COLOR = wx.NullColour
 
+#gpio pins
+ACTUATOR_EXT = 40
+ACTUATOR_RET = 38
+CHOC_PUMP_1 = 36
+FILLIG_EXT = 32
+FILLING_RET = 26
+CHOC_PUMP_2 = 24
+CUT_EXT = 22
+CUT_RET = 18
+
+# Set numbering mode for the program
+GPIO.setmode(GPIO.BOARD)
+GPIO.setwarnings(False)
+# Setup the #gpio pins
+GPIO.setup(ACTUATOR_RET, GPIO.OUT)
+GPIO.setup(ACTUATOR_EXT, GPIO.OUT)
+#gpio.setup(CHOC_PUMP_1, #gpio.OUT)
+#gpio.setup(FILLIG_EXT, #gpio.OUT)
+#gpio.setup(FILLING_RET, #gpio.OUT)
+#gpio.setup(CHOC_PUMP_2, #gpio.OUT)
+
+GPIO.output(ACTUATOR_RET, GPIO.HIGH)
+GPIO.output(ACTUATOR_EXT, GPIO.HIGH)
+#gpio.output(CHOC_PUMP_1, #gpio.HIGH)
+#gpio.output(FILLIG_EXT, #gpio.HIGH)
+#gpio.output(FILLING_RET, #gpio.HIGH)
+#gpio.output(CHOC_PUMP_2, #gpio.HIGH)
+
 # Start of our states
 class InitState(State):
-    """
-    The state which indicates that there are limited device capabilities.
-    """
-
     def on_event(self, event):
         if event == 'start':
             extendActuator()
@@ -24,9 +48,6 @@ class InitState(State):
 
 # Start of our states
 class FirstWarmUpState(State):
-    """
-    The state which indicates that there are limited device capabilities.
-    """
     def on_event(self, event):
         extendActuator()
         runChocPump1()
@@ -35,10 +56,6 @@ class FirstWarmUpState(State):
 
 # Start of our states
 class SecondWarmupState(State):
-    """
-    The state which indicates that there are limited device capabilities.
-    """
-
     def on_event(self, event):
         extendActuator()
         runChocPump1()
@@ -48,10 +65,6 @@ class SecondWarmupState(State):
 
 # Start of our states
 class RunState(State):
-    """
-    The state which indicates that there are limited device capabilities.
-    """
-
     def on_event(self, event):
         print(event)
         if event == 'run':
@@ -67,10 +80,6 @@ class RunState(State):
 
 # Start of our states
 class FirstCooldownState(State):
-    """
-    The state which indicates that there are limited device capabilities.
-    """
-
     def on_event(self, event):
         extendActuator()
         runFilling()
@@ -80,9 +89,6 @@ class FirstCooldownState(State):
 
 # Start of our states
 class SecondCooldownState(State):
-    """
-    The state which indicates that there are limited device capabilities.
-    """
 
     def on_event(self, event):
         extendActuator()
@@ -92,10 +98,6 @@ class SecondCooldownState(State):
 
 
 class StopState(State):
-    """
-    The state which indicates that there are no limitations on device
-    capabilities.
-    """
 
     def on_event(self, event):
         return self
@@ -168,21 +170,20 @@ def runChocPump2():
 
 def extendActuator():
     print("extendActuator")
-    #gpio.output(ACTUATOR_EXT, #gpio.LOW)
-    #arg.extendActuator_button.SetBackgroundColour(ACTIVE_COLOR)
+    GPIO.output(ACTUATOR_EXT, GPIO.LOW)
     # Tell the GUI about them
     wx.CallAfter(pub.sendMessage, "EXTEND_ACTUATOR", color = ACTIVE_COLOR)
     time.sleep(5)
-    #gpio.output(ACTUATOR_RET, #gpio.HIGH)
+    GPIO.output(ACTUATOR_EXT, GPIO.HIGH)
     wx.CallAfter(pub.sendMessage, "EXTEND_ACTUATOR", color = INACTIVE_COLOR)
     
 def retractActuator():
     print("retractActuator")
-    #gpio.output(ACTUATOR_RET, #gpio.LOW)
+    GPIO.output(ACTUATOR_RET, GPIO.LOW)
     wx.CallAfter(pub.sendMessage, "RETRACT_ACTUATOR", color = ACTIVE_COLOR)
-    #gpio.output(ACTUATOR_EXT, #gpio.HIGH)
     time.sleep(5)
+    GPIO.output(ACTUATOR_RET, GPIO.HIGH)
     wx.CallAfter(pub.sendMessage, "RETRACT_ACTUATOR", color = INACTIVE_COLOR)
-
+    time.sleep(2)
 
 # End of our states.
