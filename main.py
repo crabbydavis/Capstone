@@ -76,15 +76,31 @@ class Main(wx.Frame):
 
         # Subscribe to events for changing the color of buttons
         pub.subscribe(self.setExtendActuatorColor, "EXTEND_ACTUATOR")
+        pub.subscribe(self.setRetractActuatorColor, "RETRACT_ACTUATOR")
+        pub.subscribe(self.setRunChocPump1Color, "RUN_CHOC_PUMP_1")
+        pub.subscribe(self.setRunChocPump2Color, "RUN_CHOC_PUMP_2")
+        pub.subscribe(self.setExtendWireColor, "EXTEND_WIRE")
+        pub.subscribe(self.setRetractWireColor, "RETRACT_WIRE")
+        pub.subscribe(self.setExtendExtruderColor, "EXTEND_EXTRUDER")
+        pub.subscribe(self.setRetractExtruderColor, "RETRACT_EXTRUDER")
             
     def InitUI(self):
         # Define All of the Buttons that need to be added
         self.start_button = wx.Button(self, label="START")
         self.start_button.SetBackgroundColour('#42f465')
         self.Bind(wx.EVT_BUTTON, self.startFactory, self.start_button)
+
+        self.finish_button = wx.Button(self, label="FINISH")
+        self.finish_button.SetBackgroundColour('#ff6d6d')
+        self.Bind(wx.EVT_BUTTON, self.finish, self.finish_button)
+
         emergencyStop_button = wx.Button(self, label="EMERGENCY STOP")
         emergencyStop_button.SetBackgroundColour('#f44242')
         self.Bind(wx.EVT_BUTTON, self.emergencyStop, emergencyStop_button)
+
+        self.reset_button = wx.Button(self, label="RESET")
+        #self.reset_button.SetBackgroundColour('#ff6d6d')
+        self.Bind(wx.EVT_BUTTON, self.reset, self.reset_button)
 
         # Actuator
         self.extendActuator_button = wx.Button(self, label="Extend Actuator")
@@ -108,13 +124,13 @@ class Main(wx.Frame):
         self.stopExtruder_button = wx.Button(self, label="Stop Extruder")
         self.Bind(wx.EVT_BUTTON, self.startFactory, self.stopExtruder_button)
 
-        # Worm Gear
-        self.extendWorm_button = wx.Button(self, label="Extend Piano Wire")
-        self.Bind(wx.EVT_BUTTON, self.startFactory, self.extendWorm_button)
-        self.retractWorm_button = wx.Button(self, label="Retract Piano Wire")
-        self.Bind(wx.EVT_BUTTON, self.startFactory, self.retractWorm_button)
-        self.stopWorm_button = wx.Button(self, label="Stop Piano Wire")
-        self.Bind(wx.EVT_BUTTON, self.startFactory, self.stopWorm_button)
+        # Wire (Worm Gear)
+        self.extendWire_button = wx.Button(self, label="Extend Piano Wire")
+        self.Bind(wx.EVT_BUTTON, self.startFactory, self.extendWire_button)
+        self.retractWire_button = wx.Button(self, label="Retract Piano Wire")
+        self.Bind(wx.EVT_BUTTON, self.startFactory, self.retractWire_button)
+        self.stopWire_button = wx.Button(self, label="Stop Piano Wire")
+        self.Bind(wx.EVT_BUTTON, self.startFactory, self.stopWire_button)
 
         # Chocolate Pump 2
         self.runChocPump2_button = wx.Button(self, label="Run Choc. Pump 2")
@@ -128,35 +144,36 @@ class Main(wx.Frame):
         #vbox.Add(self.display, flag=wx.EXPAND|wx.TOP|wx.BOTTOM, border=4)
         gs = wx.GridSizer(4, 5, 5, 5)
 
-        gs.AddMany( [(wx.StaticText(self), wx.EXPAND),
+        gs.AddMany( [
             (self.start_button, 0, wx.EXPAND),
+            (self.finish_button, 0, wx.EXPAND),
             (wx.StaticText(self), wx.EXPAND),
             (emergencyStop_button, 0, wx.EXPAND),
-            (wx.StaticText(self), wx.EXPAND),
+            (self.reset_button, 0, wx.EXPAND),
             # Second Row
             (self.extendActuator_button, 0, wx.EXPAND),
             (self.runChocPump1_button, 0, wx.EXPAND),
             (self.extendExtruder_button, 0, wx.EXPAND),
-            (self.extendWorm_button, 0, wx.EXPAND),
+            (self.extendWire_button, 0, wx.EXPAND),
             (self.runChocPump2_button, 0, wx.EXPAND),
             # Third Row
             (self.retractActuator_button, 0, wx.EXPAND),
             (wx.StaticText(self), wx.EXPAND),
             (self.retractExtruder_button, 0, wx.EXPAND),
-            (self.retractWorm_button, 0, wx.EXPAND),
+            (self.retractWire_button, 0, wx.EXPAND),
             (wx.StaticText(self), wx.EXPAND),
             # Fourth Row
             (self.stopActuator_button, 0, wx.EXPAND),
             (self.stopChocPump1_button, 0, wx.EXPAND),
             (self.stopExtruder_button, 0, wx.EXPAND),
-            (self.stopWorm_button, 0, wx.EXPAND),
+            (self.stopWire_button, 0, wx.EXPAND),
             (self.stopChocPump2_button, 0, wx.EXPAND) ])
 
         vbox.Add(gs, proportion=1, flag=wx.EXPAND)
         self.SetSizer(vbox)
 
     def startFactory(self, event):
-        self.start_button.SetBackgroundColour(ACTIVE_COLOR)
+        #self.start_button.SetBackgroundColour(ACTIVE_COLOR)
         self.extendActuator_button.SetBackgroundColour(ACTIVE_COLOR)
         thread = Thread(target = runChocolateFactory, args = (self,))
         thread.start()
@@ -167,6 +184,27 @@ class Main(wx.Frame):
     def setExtendActuatorColor(self, color):
         print("Trying to change ext act color")
         self.extendActuator_button.SetBackgroundColour(color)
+
+    def setRetractActuatorColor(self, color):
+        self.retractActuator_button.SetBackgroundColour(color)
+
+    def setRunChocPump1Color(self, color):
+        self.runChocPump1_button.SetBackgroundColour(color)
+
+    def setExtendExtruderColor(self, color):
+        self.extendExtruder_button.SetBackgroundColour(color)
+
+    def setRetractExtruderColor(self, color):
+        self.retractExtruder_button.SetBackgroundColour(color)
+
+    def setExtendWireColor(self, color):
+        self.extendWire_button.SetBackgroundColour(color)
+
+    def setRetractWireColor(self, color):
+        self.retractWire_button.SetBackgroundColour(color)
+
+    def setRunChocPump2Color(self, color):
+        self.runChocPump2_button.SetBackgroundColour(color)
 
     #################################################################
     # Functions for running the chocolate processes of the machine
@@ -192,15 +230,15 @@ class Main(wx.Frame):
         #gpio.output(FILLIG_EXT, #gpio.HIGH)
         self.extendExtruder_button.SetBackgroundColour(INACTIVE_COLOR)
         #gpio.ouptut(CUT_EXT, #gpio.LOW)
-        self.extendWorm_button.SetBackgroundColour(ACTIVE_COLOR)
+        self.extendWire_button.SetBackgroundColour(ACTIVE_COLOR)
         time.sleep(cutTime)
         #gpio.ouptut(CUT_EXT, #gpio.HIGH)
-        self.extendWorm_button.SetBackgroundColour(INACTIVE_COLOR)
+        self.extendWire_button.SetBackgroundColour(INACTIVE_COLOR)
         #gpio.ouptut(CUT_RET, #gpio.LOW)
-        self.retractWorm_button.SetBackgroundColour(ACTIVE_COLOR)
+        self.retractWire_button.SetBackgroundColour(ACTIVE_COLOR)
         time.sleep(cutTime)
         #gpio.ouptut(CUT_RET, #gpio.HIGH)
-        self.retractWorm_button.SetBackgroundColour(INACTIVE_COLOR)
+        self.retractWire_button.SetBackgroundColour(INACTIVE_COLOR)
         #time.sleep(sleep_time)
 
     def runChocPump2(self):
@@ -257,18 +295,24 @@ class Main(wx.Frame):
         #gpio.output(ACTUATOR_RET, #gpio.HIGH)
         #gpio.output(ACTUATOR_EXT, #gpio.HIGH)
         time.sleep(3)
-    def extendWorm():
+    def extendWire():
         #gpio.output(ACTUATOR_RET, #gpio.HIGH)
         #gpio.output(ACTUATOR_EXT, #gpio.HIGH)
         time.sleep(3)
-    def retractWorm():
+    def retractWire():
         #gpio.output(ACTUATOR_RET, #gpio.HIGH)
         #gpio.output(ACTUATOR_EXT, #gpio.HIGH)
         time.sleep(3)
-    def stopWorm():
+    def stopWire():
         #gpio.output(ACTUATOR_RET, #gpio.HIGH)
         #gpio.output(ACTUATOR_EXT, #gpio.HIGH)
         time.sleep(3)
+    def finish(self, event):
+        global factoryEvent
+        runFactory = False
+        factoryEvent = 'finish'
+
+    # Do something here with killing the thread
     def emergencyStop(self, event):
         global factoryEvent
         #gpio.output(ACTUATOR_EXT, #gpio.HIGH)
@@ -279,14 +323,16 @@ class Main(wx.Frame):
         #gpio.output(CHOC_PUMP_2, #gpio.HIGH)
         #gpio.output(CUT_EXT, #gpio.HIGH)
         #gpio.output(CUT_RET, #gpio.HIGH)
-        runFactory = False
-        factoryEvent = 'finish'
+        #runFactory = False
+        #factoryEvent = 'finish'
         print('Emergency Stop Pushed')
         # Make sure all molds with chocolate in them get pushed out
         #for i in range(0, MAX_MOLDS):
          #   self.extendActuator
           #  self.retractActuator
 
+    def reset(self, event):
+        pass
     #################################################################
 
 def runChocolateFactory(arg):
@@ -299,7 +345,7 @@ def runChocolateFactory(arg):
     #factory = ChocolateFactory()
     factoryEvent = 'start'
     while runFactory:
-        factory.on_event(factoryEvent, arg)
+        factory.on_event(factoryEvent)
         if factoryEvent == 'start':
             factoryEvent = 'run'
 

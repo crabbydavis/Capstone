@@ -7,7 +7,7 @@ from wx.lib.pubsub import pub
 
 
 ACTIVE_COLOR = '#42f48c'
-INACTIVE_COLOR = '#f7f7f7'
+INACTIVE_COLOR = wx.NullColour
 
 # Start of our states
 class InitState(State):
@@ -15,8 +15,10 @@ class InitState(State):
     The state which indicates that there are limited device capabilities.
     """
 
-    def on_event(self, event, arg):
+    def on_event(self, event):
         if event == 'start':
+            extendActuator()
+            retractActuator()
             return FirstWarmUpState()
         return InitState()
 
@@ -25,10 +27,10 @@ class FirstWarmUpState(State):
     """
     The state which indicates that there are limited device capabilities.
     """
-    def on_event(self, event, mainObject):
-        extendActuator(mainObject)
-        runChocPump1(mainObject)
-        retractActuator(mainObject)
+    def on_event(self, event):
+        extendActuator()
+        runChocPump1()
+        retractActuator()
         return SecondWarmupState()
 
 # Start of our states
@@ -37,11 +39,11 @@ class SecondWarmupState(State):
     The state which indicates that there are limited device capabilities.
     """
 
-    def on_event(self, event, mainObject):
-        extendActuator(mainObject)
-        runChocPump1(mainObject)
-        runFilling(mainObject)
-        retractActuator(mainObject)
+    def on_event(self, event):
+        extendActuator()
+        runChocPump1()
+        runFilling()
+        retractActuator()
         return RunState()
 
 # Start of our states
@@ -50,14 +52,14 @@ class RunState(State):
     The state which indicates that there are limited device capabilities.
     """
 
-    def on_event(self, event, mainObject):
+    def on_event(self, event):
         print(event)
         if event == 'run':
-            extendActuator(mainObject)
-            runChocPump1(mainObject)
-            runFilling(mainObject)
-            runChocPump2(mainObject)
-            retractActuator(mainObject)
+            extendActuator()
+            runChocPump1()
+            runFilling()
+            runChocPump2()
+            retractActuator()
             return RunState()
         elif event == 'finish':
             return FirstCooldownState()
@@ -70,10 +72,10 @@ class FirstCooldownState(State):
     """
 
     def on_event(self, event):
-        extendActuator(self)
-        runFilling(self)
-        runChocPump2(self)
-        retractActuator(self)
+        extendActuator()
+        runFilling()
+        runChocPump2()
+        retractActuator()
         return SecondCooldownState()
 
 # Start of our states
@@ -83,9 +85,9 @@ class SecondCooldownState(State):
     """
 
     def on_event(self, event):
-        extendActuator(self)
-        runChocPump2(self)
-        retractActuator(self)
+        extendActuator()
+        runChocPump2()
+        retractActuator()
         return StopState()
 
 
@@ -101,54 +103,70 @@ class StopState(State):
 #################################################################
 # Functions for running the chocolate processes of the machine
 #################################################################
-def runChocPump1(self):
+def runChocPump1():
     print("runChocPump1")
-    runTime = .5
+    runTime = 5
     #sleep_time = STAGE_TIME - runTime
     #gpio.output(CHOC_PUMP_1, #gpio.LOW)
-    #self.runChocPump1_button.SetBackgroundColour(ACTIVE_COLOR)
+    wx.CallAfter(pub.sendMessage, "RUN_CHOC_PUMP_1", color = ACTIVE_COLOR)
     time.sleep(runTime) # Number of seconds that the pi will sleep
     #gpio.output(CHOC_PUMP_1, #gpio.HIGH)
-    #self.runChocPump1_button.SetBackgroundColour(INACTIVE_COLOR)
+    wx.CallAfter(pub.sendMessage, "RUN_CHOC_PUMP_1", color = INACTIVE_COLOR)
     #time.sleep(sleep_time)
 
-def runFilling(self):
+def runFilling():
     print("runFilling")
     fillingRunTime = .5
     cutTime = .2
     #sleep_time = STAGE_TIME - fillingRunTime - cutTime * 2
     #gpio.output(FILLIG_EXT, #gpio.LOW)
-    #self.extendExtruder_button.SetBackgroundColour(ACTIVE_COLOR)
-    time.sleep(fillingRunTime) # Number of seconds that the pi will sleep
-    #gpio.output(FILLIG_EXT, #gpio.HIGH)
-    #self.extendExtruder_button.SetBackgroundColour(INACTIVE_COLOR)
-    #gpio.ouptut(CUT_EXT, #gpio.LOW)
-    #self.extendWorm_button.SetBackgroundColour(ACTIVE_COLOR)
-    time.sleep(cutTime)
-    #gpio.ouptut(CUT_EXT, #gpio.HIGH)
-    #self.extendWorm_button.SetBackgroundColour(INACTIVE_COLOR)
-    #gpio.ouptut(CUT_RET, #gpio.LOW)
-    #self.retractWorm_button.SetBackgroundColour(ACTIVE_COLOR)
-    time.sleep(cutTime)
-    #gpio.ouptut(CUT_RET, #gpio.HIGH)
-    #self.retractWorm_button.SetBackgroundColour(INACTIVE_COLOR)
-    #time.sleep(sleep_time)
+    extendExtruder()
+    extendWire()
+    retractWire()
 
-def runChocPump2(self):
+def extendExtruder():
+    print("In extendExtruder")
+    #gpio.output(ACTUATOR_RET, #gpio.HIGH)
+    wx.CallAfter(pub.sendMessage, "EXTEND_EXTRUDER", color = ACTIVE_COLOR)
+    time.sleep(5)
+    #gpio.output(ACTUATOR_EXT, #gpio.HIGH)
+    wx.CallAfter(pub.sendMessage, "EXTEND_EXTRUDER", color = INACTIVE_COLOR)
+
+def retractExtruder():
+    #gpio.output(ACTUATOR_RET, #gpio.HIGH)
+    wx.CallAfter(pub.sendMessage, "RETRACT_EXTRUDER", color = ACTIVE_COLOR)
+    time.sleep(5)
+    #gpio.output(ACTUATOR_EXT, #gpio.HIGH)
+    wx.CallAfter(pub.sendMessage, "RETRACT_EXTRUDER", color = INACTIVE_COLOR)
+
+def extendWire():
+    print("In extendWire")
+    #gpio.output(ACTUATOR_RET, #gpio.HIGH)
+    wx.CallAfter(pub.sendMessage, "EXTEND_WIRE", color = ACTIVE_COLOR)
+    time.sleep(5)
+    #gpio.output(ACTUATOR_EXT, #gpio.HIGH)
+    wx.CallAfter(pub.sendMessage, "EXTEND_WIRE", color = INACTIVE_COLOR)
+
+def retractWire():
+    print("In retractWire")
+    #gpio.output(ACTUATOR_RET, #gpio.HIGH)
+    wx.CallAfter(pub.sendMessage, "RETRACT_WIRE", color = ACTIVE_COLOR)
+    time.sleep(5)
+    #gpio.output(ACTUATOR_EXT, #gpio.HIGH)
+    wx.CallAfter(pub.sendMessage, "RETRACT_WIRE", color = INACTIVE_COLOR)
+
+def runChocPump2():
     print("runChocPump2")
-    runTime = .5
+    runTime = 5
     #sleep_time = STAGE_TIME - runTime
     #gpio.output(CHOC_PUMP_2, #gpio.LOW)
-    #self.runChocPump2_button.SetBackgroundColour(ACTIVE_COLOR)
+    wx.CallAfter(pub.sendMessage, "RUN_CHOC_PUMP_2", color = ACTIVE_COLOR)
     time.sleep(runTime) # Number of seconds that the pi will sleep
     #gpio.output(CHOC_PUMP_2, #gpio.HIGH)
-    #self.runChocPump2_button.SetBackgroundColour(INACTIVE_COLOR)
+    wx.CallAfter(pub.sendMessage, "RUN_CHOC_PUMP_2", color = INACTIVE_COLOR)
     #time.sleep(sleep_time)
 
-#################################################################
-# Functions to control individual components
-#################################################################
-def extendActuator(arg):
+def extendActuator():
     print("extendActuator")
     #gpio.output(ACTUATOR_EXT, #gpio.LOW)
     #arg.extendActuator_button.SetBackgroundColour(ACTIVE_COLOR)
@@ -156,16 +174,15 @@ def extendActuator(arg):
     wx.CallAfter(pub.sendMessage, "EXTEND_ACTUATOR", color = ACTIVE_COLOR)
     time.sleep(5)
     #gpio.output(ACTUATOR_RET, #gpio.HIGH)
-    arg.extendActuator_button.SetBackgroundColour(INACTIVE_COLOR)
-    time.sleep(.3)
+    wx.CallAfter(pub.sendMessage, "EXTEND_ACTUATOR", color = INACTIVE_COLOR)
     
-def retractActuator(self):
+def retractActuator():
     print("retractActuator")
     #gpio.output(ACTUATOR_RET, #gpio.LOW)
-    self.retractActuator_button.SetBackgroundColour(ACTIVE_COLOR)
+    wx.CallAfter(pub.sendMessage, "RETRACT_ACTUATOR", color = ACTIVE_COLOR)
     #gpio.output(ACTUATOR_EXT, #gpio.HIGH)
-    self.retractActuator_button.SetBackgroundColour(INACTIVE_COLOR)
-    time.sleep(.3)
+    time.sleep(5)
+    wx.CallAfter(pub.sendMessage, "RETRACT_ACTUATOR", color = INACTIVE_COLOR)
 
 
 # End of our states.

@@ -13,11 +13,11 @@ class ChocolateFactory(object):
         # Start with a default state.
         self.state = InitState()
 
-    def on_event(self, event, arg):
+    def on_event(self, event):
         """
         This is the bread and butter of the state machine. Incoming events are
         delegated to the given states which then handle the event. The result is
         then assigned as the new state.
         """
         # The next state will be the result of the on_event function.
-        self.state = self.state.on_event(event, arg)
+        self.state = self.state.on_event(event)
