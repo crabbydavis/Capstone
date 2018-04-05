@@ -5,7 +5,7 @@
 import wx
 import time
 from threading import Thread
-#import RPi.#gpio as #gpio
+import RPi.GPIO as GPIO
 from enum import Enum
 from multiprocessing.pool import ThreadPool
 from chocolate_factory import ChocolateFactory
@@ -17,15 +17,15 @@ from wx.lib.pubsub import pub
 MAX_STEPS_EXTRUDER = 1000
 MAX_MOLDS = 6
 
-##gpio pins
+#GPIO pins
 ACTUATOR_EXT = 40
 ACTUATOR_RET = 38
 CHOC_PUMP_1 = 36
 FILLIG_EXT = 32
 FILLING_RET = 26
 CHOC_PUMP_2 = 24
-CUT_EXT = 22
-CUT_RET = 18
+WIRE_EXT = 22
+WIRE_RET = 18
 #16 12 ARE STILL AVAILABLE ON THE ONE SIDE
 
 STAGE_TIME = 90
@@ -46,22 +46,22 @@ current_st = State.INIT
 runFactory = False
 factoryEvent = ''
 # Set numbering mode for the program
-#gpio.setmode(#gpio.BOARD)
+GPIO.setmode(GPIO.BOARD)
+GPIO.setwarnings(False)
+# Setup the GPIO pins
+GPIO.setup(ACTUATOR_RET, GPIO.OUT)
+GPIO.setup(ACTUATOR_EXT, GPIO.OUT)
+GPIO.setup(CHOC_PUMP_1, GPIO.OUT)
+GPIO.setup(FILLIG_EXT, GPIO.OUT)
+GPIO.setup(FILLING_RET, GPIO.OUT)
+GPIO.setup(CHOC_PUMP_2, GPIO.OUT)
 
-# Setup the #gpio pins
-#gpio.setup(ACTUATOR_RET, #gpio.OUT)
-#gpio.setup(ACTUATOR_EXT, #gpio.OUT)
-#gpio.setup(CHOC_PUMP_1, #gpio.OUT)
-#gpio.setup(FILLIG_EXT, #gpio.OUT)
-#gpio.setup(FILLING_RET, #gpio.OUT)
-#gpio.setup(CHOC_PUMP_2, #gpio.OUT)
-
-#gpio.output(ACTUATOR_RET, #gpio.HIGH)
-#gpio.output(ACTUATOR_EXT, #gpio.HIGH)
-#gpio.output(CHOC_PUMP_1, #gpio.HIGH)
-#gpio.output(FILLIG_EXT, #gpio.HIGH)
-#gpio.output(FILLING_RET, #gpio.HIGH)
-#gpio.output(CHOC_PUMP_2, #gpio.HIGH)
+GPIO.output(ACTUATOR_RET, GPIO.HIGH)
+GPIO.output(ACTUATOR_EXT, GPIO.HIGH)
+GPIO.output(CHOC_PUMP_1, GPIO.HIGH)
+GPIO.output(FILLIG_EXT, GPIO.HIGH)
+GPIO.output(FILLING_RET, GPIO.HIGH)
+GPIO.output(CHOC_PUMP_2, GPIO.HIGH)
 
 class Main(wx.Frame):
     #state = State()
@@ -99,7 +99,6 @@ class Main(wx.Frame):
         self.Bind(wx.EVT_BUTTON, self.emergencyStop, emergencyStop_button)
 
         self.reset_button = wx.Button(self, label="RESET")
-        #self.reset_button.SetBackgroundColour('#ff6d6d')
         self.Bind(wx.EVT_BUTTON, self.reset, self.reset_button)
 
         # Actuator
@@ -112,36 +111,34 @@ class Main(wx.Frame):
         
         # Chocolate Pump 1
         self.runChocPump1_button = wx.Button(self, label="Run Choc. Pump 1")
-        self.Bind(wx.EVT_BUTTON, self.startFactory, self.runChocPump1_button)
+        self.Bind(wx.EVT_BUTTON, self.runChocPump1, self.runChocPump1_button)
         self.stopChocPump1_button = wx.Button(self, label="Stop Choc. Pump 1")
-        self.Bind(wx.EVT_BUTTON, self.startFactory, self.stopChocPump1_button)
+        self.Bind(wx.EVT_BUTTON, self.stopChocPump1, self.stopChocPump1_button)
 
         # Filling Extruder
         self.extendExtruder_button = wx.Button(self, label="Extend Extruder")
-        self.Bind(wx.EVT_BUTTON, self.startFactory, self.extendExtruder_button)
+        self.Bind(wx.EVT_BUTTON, self.extendExtruder, self.extendExtruder_button)
         self.retractExtruder_button = wx.Button(self, label="Retract Extruder")
-        self.Bind(wx.EVT_BUTTON, self.startFactory, self.retractExtruder_button)
+        self.Bind(wx.EVT_BUTTON, self.retractExtruder, self.retractExtruder_button)
         self.stopExtruder_button = wx.Button(self, label="Stop Extruder")
-        self.Bind(wx.EVT_BUTTON, self.startFactory, self.stopExtruder_button)
+        self.Bind(wx.EVT_BUTTON, self.stopExtruder, self.stopExtruder_button)
 
         # Wire (Worm Gear)
         self.extendWire_button = wx.Button(self, label="Extend Piano Wire")
-        self.Bind(wx.EVT_BUTTON, self.startFactory, self.extendWire_button)
+        self.Bind(wx.EVT_BUTTON, self.extendWire, self.extendWire_button)
         self.retractWire_button = wx.Button(self, label="Retract Piano Wire")
-        self.Bind(wx.EVT_BUTTON, self.startFactory, self.retractWire_button)
+        self.Bind(wx.EVT_BUTTON, self.retractWire, self.retractWire_button)
         self.stopWire_button = wx.Button(self, label="Stop Piano Wire")
-        self.Bind(wx.EVT_BUTTON, self.startFactory, self.stopWire_button)
+        self.Bind(wx.EVT_BUTTON, self.stopWire, self.stopWire_button)
 
         # Chocolate Pump 2
         self.runChocPump2_button = wx.Button(self, label="Run Choc. Pump 2")
-        self.Bind(wx.EVT_BUTTON, self.startFactory, self.runChocPump2_button)
+        self.Bind(wx.EVT_BUTTON, self.runChocPump2, self.runChocPump2_button)
         self.stopChocPump2_button = wx.Button(self, label="Stop Choc. Pump 2")
-        self.Bind(wx.EVT_BUTTON, self.startFactory, self.stopChocPump2_button)
+        self.Bind(wx.EVT_BUTTON, self.stopChocPump2, self.stopChocPump2_button)
 
         # Setup the display to be a grid of all of the buttons
         vbox = wx.BoxSizer(wx.VERTICAL)
-        #self.display = wx.TextCtrl(self, style=wx.TE_RIGHT)
-        #vbox.Add(self.display, flag=wx.EXPAND|wx.TOP|wx.BOTTOM, border=4)
         gs = wx.GridSizer(4, 5, 5, 5)
 
         gs.AddMany( [
@@ -204,109 +201,59 @@ class Main(wx.Frame):
         self.retractWire_button.SetBackgroundColour(color)
 
     def setRunChocPump2Color(self, color):
-        self.runChocPump2_button.SetBackgroundColour(color)
-
-    #################################################################
-    # Functions for running the chocolate processes of the machine
-    #################################################################
-    def runChocPump1(self):
-        print("runChocPump1")
-        runTime = .5
-        #sleep_time = STAGE_TIME - runTime
-        #gpio.output(CHOC_PUMP_1, #gpio.LOW)
-        self.runChocPump1_button.SetBackgroundColour(ACTIVE_COLOR)
-        time.sleep(runTime) # Number of seconds that the pi will sleep
-        #gpio.output(CHOC_PUMP_1, #gpio.HIGH)
-        self.runChocPump1_button.SetBackgroundColour(INACTIVE_COLOR)
-        #time.sleep(sleep_time)
-
-    def runFilling(self):
-        fillingRunTime = .5
-        cutTime = .2
-        #sleep_time = STAGE_TIME - fillingRunTime - cutTime * 2
-        #gpio.output(FILLIG_EXT, #gpio.LOW)
-        self.extendExtruder_button.SetBackgroundColour(ACTIVE_COLOR)
-        time.sleep(fillingRunTime) # Number of seconds that the pi will sleep
-        #gpio.output(FILLIG_EXT, #gpio.HIGH)
-        self.extendExtruder_button.SetBackgroundColour(INACTIVE_COLOR)
-        #gpio.ouptut(CUT_EXT, #gpio.LOW)
-        self.extendWire_button.SetBackgroundColour(ACTIVE_COLOR)
-        time.sleep(cutTime)
-        #gpio.ouptut(CUT_EXT, #gpio.HIGH)
-        self.extendWire_button.SetBackgroundColour(INACTIVE_COLOR)
-        #gpio.ouptut(CUT_RET, #gpio.LOW)
-        self.retractWire_button.SetBackgroundColour(ACTIVE_COLOR)
-        time.sleep(cutTime)
-        #gpio.ouptut(CUT_RET, #gpio.HIGH)
-        self.retractWire_button.SetBackgroundColour(INACTIVE_COLOR)
-        #time.sleep(sleep_time)
-
-    def runChocPump2(self):
-        runTime = .5
-        #sleep_time = STAGE_TIME - runTime
-        #gpio.output(CHOC_PUMP_2, #gpio.LOW)
-        self.runChocPump2_button.SetBackgroundColour(ACTIVE_COLOR)
-        time.sleep(runTime) # Number of seconds that the pi will sleep
-        #gpio.output(CHOC_PUMP_2, #gpio.HIGH)
-        self.runChocPump2_button.SetBackgroundColour(INACTIVE_COLOR)
-        #time.sleep(sleep_time)
+        self.runChocPump2_button.SetBackgroundColour(color)    
 
     #################################################################
     # Functions to control individual components
     #################################################################
-    def extendActuator(self):
-        print("extendActuator")
-        #gpio.output(ACTUATOR_EXT, #gpio.LOW)
-        self.extendActuator_button.SetBackgroundColour(ACTIVE_COLOR)
-        #gpio.output(ACTUATOR_RET, #gpio.HIGH)
-        self.retractActuator_button.SetBackgroundColour(INACTIVE_COLOR)
-        time.sleep(.3)
+    def extendActuator(self, event):
+        GPIO.output(ACTUATOR_EXT, GPIO.LOW)
+        time.sleep(5)
+        GPIO.output(ACTUATOR_EXT, GPIO.HIGH)
         
-    def retractActuator(self):
-        print("retractActuator")
-        #gpio.output(ACTUATOR_RET, #gpio.LOW)
-        self.retractActuator_button.SetBackgroundColour(ACTIVE_COLOR)
-        #gpio.output(ACTUATOR_EXT, #gpio.HIGH)
-        self.extendActuator_button.SetBackgroundColour(INACTIVE_COLOR)
-        time.sleep(.3)
+    def retractActuator(self, event):
+        GPIO.output(ACTUATOR_RET, GPIO.HIGH)
+        time.sleep(5)
+        GPIO.output(ACTUATOR_EXT, GPIO.HIGH)
 
-    def stopActuator():
-        #gpio.output(ACTUATOR_RET, #gpio.HIGH)
-        #gpio.output(ACTUATOR_EXT, #gpio.HIGH)
-        time.sleep(3)
-    
-    #def runChocPump1():
-        #gpio.output(ACTUATOR_RET, #gpio.HIGH)
-        #gpio.output(ACTUATOR_EXT, #gpio.HIGH)
-        #time.sleep(3)
-    def stopChocPump1():
-        #gpio.output(ACTUATOR_RET, #gpio.HIGH)
-        #gpio.output(ACTUATOR_EXT, #gpio.HIGH)
-        time.sleep(3)
-    def extendExtruder():
-        #gpio.output(ACTUATOR_RET, #gpio.HIGH)
-        #gpio.output(ACTUATOR_EXT, #gpio.HIGH)
-        time.sleep(3)
-    def retractExtruder():
-        #gpio.output(ACTUATOR_RET, #gpio.HIGH)
-        #gpio.output(ACTUATOR_EXT, #gpio.HIGH)
-        time.sleep(3)
-    def stopExtruder():
-        #gpio.output(ACTUATOR_RET, #gpio.HIGH)
-        #gpio.output(ACTUATOR_EXT, #gpio.HIGH)
-        time.sleep(3)
-    def extendWire():
-        #gpio.output(ACTUATOR_RET, #gpio.HIGH)
-        #gpio.output(ACTUATOR_EXT, #gpio.HIGH)
-        time.sleep(3)
-    def retractWire():
-        #gpio.output(ACTUATOR_RET, #gpio.HIGH)
-        #gpio.output(ACTUATOR_EXT, #gpio.HIGH)
-        time.sleep(3)
-    def stopWire():
-        #gpio.output(ACTUATOR_RET, #gpio.HIGH)
-        #gpio.output(ACTUATOR_EXT, #gpio.HIGH)
-        time.sleep(3)
+    def stopActuator(self, event):
+        GPIO.output(ACTUATOR_RET, GPIO.HIGH)
+        GPIO.output(ACTUATOR_EXT, GPIO.HIGH)
+
+    def runChocPump1(self, event):
+        GPIO.output(CHOC_PUMP_1, GPIO.LOW)
+
+    def stopChocPump1(self, event):
+        GPIO.output(CHOC_PUMP_1, GPIO.HIGH)
+
+    def runChocPump2(self, event):
+        GPIO.output(CHOC_PUMP_2, GPIO.LOW)
+
+    def stopChocPump2(self, event):
+        GPIO.output(CHOC_PUMP_2, GPIO.HIGH)
+
+    def extendExtruder(self, event):
+        # Have the stepper motor stop stepping
+        pass
+
+    def retractExtruder(self, event):
+        # Have the stepper motor retract all the way
+        pass
+
+    def stopExtruder(self, event):
+        # Have the stepper motor stop
+        pass
+
+    def extendWire(self, event):
+        GPIO.output(WIRE_EXT, GPIO.LOW)
+
+    def retractWire(self, event):
+        GPIO.output(WIRE_RET, GPIO.HIGH)
+
+    def stopWire(self, event):
+        GPIO.output(WIRE_EXT, GPIO.HIGH)
+        GPIO.output(WIRE_RET, GPIO.HIGH)
+
     def finish(self, event):
         global factoryEvent
         runFactory = False
@@ -315,34 +262,28 @@ class Main(wx.Frame):
     # Do something here with killing the thread
     def emergencyStop(self, event):
         global factoryEvent
-        #gpio.output(ACTUATOR_EXT, #gpio.HIGH)
-        #gpio.output(ACTUATOR_RET, #gpio.HIGH)
-        #gpio.output(CHOC_PUMP_1, #gpio.HIGH)
-        #gpio.output(FILLIG_EXT, #gpio.HIGH)
-        #gpio.output(FILLING_RET, #gpio.HIGH)
-        #gpio.output(CHOC_PUMP_2, #gpio.HIGH)
-        #gpio.output(CUT_EXT, #gpio.HIGH)
-        #gpio.output(CUT_RET, #gpio.HIGH)
-        #runFactory = False
-        #factoryEvent = 'finish'
-        print('Emergency Stop Pushed')
+        GPIO.output(ACTUATOR_EXT, GPIO.HIGH)
+        GPIO.output(ACTUATOR_RET, GPIO.HIGH)
+        GPIO.output(CHOC_PUMP_1, GPIO.HIGH)
+        GPIO.output(FILLIG_EXT, GPIO.HIGH)
+        GPIO.output(FILLING_RET, GPIO.HIGH)
+        GPIO.output(CHOC_PUMP_2, GPIO.HIGH)
+        GPIO.output(WIRE_EXT, GPIO.HIGH)
+        GPIO.output(WIRE_RET, GPIO.HIGH)
+
+    def reset(self, event):
+        pass
         # Make sure all molds with chocolate in them get pushed out
         #for i in range(0, MAX_MOLDS):
          #   self.extendActuator
           #  self.retractActuator
-
-    def reset(self, event):
-        pass
     #################################################################
 
 def runChocolateFactory(arg):
     print('runChocolateFactory')
-    #print(arg)
-    #arg.extendActuator_button.SetBackgroundColour(ACTIVE_COLOR)
     global factoryEvent
     factory = ChocolateFactory()
     runFactory = True
-    #factory = ChocolateFactory()
     factoryEvent = 'start'
     while runFactory:
         factory.on_event(factoryEvent)
