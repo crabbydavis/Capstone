@@ -207,14 +207,16 @@ class Main(wx.Frame):
     # Functions to control individual components
     #################################################################
     def extendActuator(self, event):
-        GPIO.output(ACTUATOR_EXT, GPIO.LOW)
-        time.sleep(5)
-        GPIO.output(ACTUATOR_EXT, GPIO.HIGH)
-        
+		GPIO.output(ACTUATOR_RET, GPIO.HIGH)
+        GPIO.output(ACTUATOR_EXT, GPIO.LOW) 
+		#time.sleep(5) 
+		#GPIO.output(ACTUATOR_EXT, GPIO.HIGH)
+
     def retractActuator(self, event):
-        GPIO.output(ACTUATOR_RET, GPIO.HIGH)
-        time.sleep(5)
         GPIO.output(ACTUATOR_EXT, GPIO.HIGH)
+		GPIO.output(ACTUATOR_RET, GPIO.LOW)
+        #time.sleep(5)
+        #GPIO.output(ACTUATOR_EXT, GPIO.HIGH)
 
     def stopActuator(self, event):
         GPIO.output(ACTUATOR_RET, GPIO.HIGH)
@@ -245,10 +247,12 @@ class Main(wx.Frame):
         pass
 
     def extendWire(self, event):
-        GPIO.output(WIRE_EXT, GPIO.LOW)
+        GPIO.output(WIRE_RET, GPIO.HIGH)
+		GPIO.output(WIRE_EXT, GPIO.LOW)
 
     def retractWire(self, event):
-        GPIO.output(WIRE_RET, GPIO.HIGH)
+        GPIO.output(WIRE_EXT, GPIO.HIGH)
+		GPIO.output(WIRE_RET, GPIO.LOW)
 
     def stopWire(self, event):
         GPIO.output(WIRE_EXT, GPIO.HIGH)

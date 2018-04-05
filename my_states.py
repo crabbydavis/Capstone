@@ -9,7 +9,7 @@ import RPi.GPIO as GPIO
 ACTIVE_COLOR = '#42f48c'
 INACTIVE_COLOR = wx.NullColour
 
-GPIO pins
+# GPIO pins
 ACTUATOR_EXT = 40
 ACTUATOR_RET = 38
 CHOC_PUMP_1 = 36
