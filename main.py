@@ -17,18 +17,17 @@ from wx.lib.pubsub import pub
 MAX_STEPS_EXTRUDER = 1000
 MAX_MOLDS = 6
 
-#GPIO pins
+# GPIO pins
 ACTUATOR_EXT = 40
 ACTUATOR_RET = 38
 CHOC_PUMP_1 = 36
-FILLIG_EXT = 32
-FILLING_RET = 26
-CHOC_PUMP_2 = 24
-WIRE_EXT = 22
-WIRE_RET = 18
+CHOC_PUMP_2 = 32
+FILLING_EXT = 26
+FILLING_RET = 24
+CUT_EXT = 22
+CUT_RET = 18
 #16 12 ARE STILL AVAILABLE ON THE ONE SIDE
 
-STAGE_TIME = 90
 ACTIVE_COLOR = '#42f48c'
 INACTIVE_COLOR = '#f7f7f7'
 
@@ -52,14 +51,14 @@ GPIO.setwarnings(False)
 GPIO.setup(ACTUATOR_RET, GPIO.OUT)
 GPIO.setup(ACTUATOR_EXT, GPIO.OUT)
 GPIO.setup(CHOC_PUMP_1, GPIO.OUT)
-GPIO.setup(FILLIG_EXT, GPIO.OUT)
+GPIO.setup(FILLING_EXT, GPIO.OUT)
 GPIO.setup(FILLING_RET, GPIO.OUT)
 GPIO.setup(CHOC_PUMP_2, GPIO.OUT)
 
 GPIO.output(ACTUATOR_RET, GPIO.HIGH)
 GPIO.output(ACTUATOR_EXT, GPIO.HIGH)
 GPIO.output(CHOC_PUMP_1, GPIO.HIGH)
-GPIO.output(FILLIG_EXT, GPIO.HIGH)
+GPIO.output(FILLING_EXT, GPIO.HIGH)
 GPIO.output(FILLING_RET, GPIO.HIGH)
 GPIO.output(CHOC_PUMP_2, GPIO.HIGH)
 
@@ -207,14 +206,14 @@ class Main(wx.Frame):
     # Functions to control individual components
     #################################################################
     def extendActuator(self, event):
-		GPIO.output(ACTUATOR_RET, GPIO.HIGH)
+        GPIO.output(ACTUATOR_RET, GPIO.HIGH)
         GPIO.output(ACTUATOR_EXT, GPIO.LOW) 
-		#time.sleep(5) 
-		#GPIO.output(ACTUATOR_EXT, GPIO.HIGH)
+	#time.sleep(5) 
+	#GPIO.output(ACTUATOR_EXT, GPIO.HIGH)
 
     def retractActuator(self, event):
         GPIO.output(ACTUATOR_EXT, GPIO.HIGH)
-		GPIO.output(ACTUATOR_RET, GPIO.LOW)
+        GPIO.output(ACTUATOR_RET, GPIO.LOW)
         #time.sleep(5)
         #GPIO.output(ACTUATOR_EXT, GPIO.HIGH)
 
@@ -248,11 +247,11 @@ class Main(wx.Frame):
 
     def extendWire(self, event):
         GPIO.output(WIRE_RET, GPIO.HIGH)
-		GPIO.output(WIRE_EXT, GPIO.LOW)
+        GPIO.output(WIRE_EXT, GPIO.LOW)
 
     def retractWire(self, event):
         GPIO.output(WIRE_EXT, GPIO.HIGH)
-		GPIO.output(WIRE_RET, GPIO.LOW)
+        GPIO.output(WIRE_RET, GPIO.LOW)
 
     def stopWire(self, event):
         GPIO.output(WIRE_EXT, GPIO.HIGH)
@@ -269,7 +268,7 @@ class Main(wx.Frame):
         GPIO.output(ACTUATOR_EXT, GPIO.HIGH)
         GPIO.output(ACTUATOR_RET, GPIO.HIGH)
         GPIO.output(CHOC_PUMP_1, GPIO.HIGH)
-        GPIO.output(FILLIG_EXT, GPIO.HIGH)
+        GPIO.output(FILLING_EXT, GPIO.HIGH)
         GPIO.output(FILLING_RET, GPIO.HIGH)
         GPIO.output(CHOC_PUMP_2, GPIO.HIGH)
         GPIO.output(WIRE_EXT, GPIO.HIGH)

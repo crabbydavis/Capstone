@@ -13,11 +13,23 @@ INACTIVE_COLOR = wx.NullColour
 ACTUATOR_EXT = 40
 ACTUATOR_RET = 38
 CHOC_PUMP_1 = 36
-FILLIG_EXT = 32
-FILLING_RET = 26
-CHOC_PUMP_2 = 24
+CHOC_PUMP_2 = 32
+FILLING_EXT = 26
+FILLING_RET = 24
 CUT_EXT = 22
 CUT_RET = 18
+
+# Costants for timing
+chocPump1RunTime = 8
+chocPump2RunTime = 10
+actuatorTime = 10
+stageTime = 30
+runTime = 60
+
+ranFirstWarmUp = False
+ranSecondWarmUp = False
+ranFirstCooldown = False
+ranSecondCooldown = False
 
 # Set numbering mode for the program
 GPIO.setmode(GPIO.BOARD)
@@ -26,53 +38,76 @@ GPIO.setwarnings(False)
 GPIO.setup(ACTUATOR_RET, GPIO.OUT)
 GPIO.setup(ACTUATOR_EXT, GPIO.OUT)
 GPIO.setup(CHOC_PUMP_1, GPIO.OUT)
-GPIO.setup(FILLIG_EXT, GPIO.OUT)
+GPIO.setup(FILLING_EXT, GPIO.OUT)
 GPIO.setup(FILLING_RET, GPIO.OUT)
 GPIO.setup(CHOC_PUMP_2, GPIO.OUT)
 
 GPIO.output(ACTUATOR_RET, GPIO.HIGH)
 GPIO.output(ACTUATOR_EXT, GPIO.HIGH)
 GPIO.output(CHOC_PUMP_1, GPIO.HIGH)
-GPIO.output(FILLIG_EXT, GPIO.HIGH)
+GPIO.output(FILLING_EXT, GPIO.HIGH)
 GPIO.output(FILLING_RET, GPIO.HIGH)
 GPIO.output(CHOC_PUMP_2, GPIO.HIGH)
 
 # Start of our states
 class InitState(State):
+    global ranFirstWarmUp
+    global ranSecondWarmUp
+    global ranFirstCooldown
+    global ranSecodCooldown
     def on_event(self, event):
         if event == 'start':
-            extendActuator()
-            retractActuator()
+            ranFirstWarmUp = False
+            ranSecondWarmUp = False
+            ranFirstCooldown = False
+            ranSecodCooldown = False
             return FirstWarmUpState()
         return InitState()
 
 # Start of our states
 class FirstWarmUpState(State):
     def on_event(self, event):
+        global ranFirstWarmUp
+        print(stageTime)
+        firstWarmUpStageTime = stageTime - chocPump1RunTime - actuatorTime
         extendActuator()
-        runChocPump1()
         retractActuator()
-        return SecondWarmupState()
+        runChocPump1()
+        time.sleep(firstWarmUpStageTime)
+        if ranFirstWarmUp == False:
+            ranFirstWarmUp = True
+            return FirstWarmUpState()
+        else:
+            return SecondWarmupState()
 
 # Start of our states
 class SecondWarmupState(State):
     def on_event(self, event):
+        global ranSecondWarmUp
+        print(stageTime)
+        secondWarmUpStageTime = stageTime - chocPump1RunTime - actuatorTime
         extendActuator()
-        runChocPump1()
-        runFilling()
         retractActuator()
-        return RunState()
+        runChocPump1()
+        #runFilling()
+        time.sleep(secondWarmUpStageTime)
+        if ranSecondWarmUp == False:
+            ranSecondWarmUp = True
+            return SecondWarmupState()
+        else:
+            return RunState()
 
 # Start of our states
 class RunState(State):
     def on_event(self, event):
-        print(event)
+        runStageTime = runTime - chocPump1RunTime - chocPump2RunTime - actuatorTime
         if event == 'run':
             extendActuator()
-            runChocPump1()
-            runFilling()
-            runChocPump2()
             retractActuator()
+            runChocPump1()
+            #runFilling()
+            runChocPump2()
+            time.sleep(runStageTime)
             return RunState()
         elif event == 'finish':
             return FirstCooldownState()
@@ -81,25 +116,38 @@ class RunState(State):
 # Start of our states
 class FirstCooldownState(State):
     def on_event(self, event):
+        global ranFirstCooldown
+        firstCooldownStageTime = stageTime - chocPump2RunTime - actuatorTime
         extendActuator()
-        runFilling()
-        runChocPump2()
         retractActuator()
-        return SecondCooldownState()
+        #runFilling()
+        runChocPump2()
+        if ranFirstCooldown == False:
+            ranFirstCooldown = True
+            return FirstCooldownState()
+        else:
+            return SecondCooldownState()
 
 # Start of our states
 class SecondCooldownState(State):
-
     def on_event(self, event):
+        global ranSecondCooldown
+        secondCooldownStageTime = stageTime - chocPump2RunTime - actuatorTime
         extendActuator()
-        runChocPump2()
         retractActuator()
-        return StopState()
+        runChocPump2()
+        if ranSecondCooldown == False:
+            ranSecondCooldown = True
+            return SecondCooldownState()
+        else:
+            return StopState()
 
 
 class StopState(State):
 
     def on_event(self, event):
+        extendActuator()
+        retractActuator()
         return self
 
 #################################################################
@@ -107,21 +155,18 @@ class StopState(State):
 #################################################################
 def runChocPump1():
     print("runChocPump1")
-    runTime = 5
-    #sleep_time = STAGE_TIME - runTime
+    runTime = 8
     GPIO.output(CHOC_PUMP_1, GPIO.LOW)
     wx.CallAfter(pub.sendMessage, "RUN_CHOC_PUMP_1", color = ACTIVE_COLOR)
     time.sleep(runTime) # Number of seconds that the pi will sleep
     GPIO.output(CHOC_PUMP_1, GPIO.HIGH)
     wx.CallAfter(pub.sendMessage, "RUN_CHOC_PUMP_1", color = INACTIVE_COLOR)
-    #time.sleep(sleep_time)
 
 def runFilling():
     print("runFilling")
     fillingRunTime = .5
     cutTime = .2
-    #sleep_time = STAGE_TIME - fillingRunTime - cutTime * 2
-    GPIO.output(FILLIG_EXT, GPIO.LOW)
+    GPIO.output(FILLING_EXT, GPIO.LOW)
     extendExtruder()
     extendWire()
     retractWire()
@@ -158,15 +203,12 @@ def retractWire():
     wx.CallAfter(pub.sendMessage, "RETRACT_WIRE", color = INACTIVE_COLOR)
 
 def runChocPump2():
-    print("runChocPump2")
-    runTime = 5
-    #sleep_time = STAGE_TIME - runTime
+    runTime = 12
     GPIO.output(CHOC_PUMP_2, GPIO.LOW)
     wx.CallAfter(pub.sendMessage, "RUN_CHOC_PUMP_2", color = ACTIVE_COLOR)
     time.sleep(runTime) # Number of seconds that the pi will sleep
     GPIO.output(CHOC_PUMP_2, GPIO.HIGH)
     wx.CallAfter(pub.sendMessage, "RUN_CHOC_PUMP_2", color = INACTIVE_COLOR)
-    #time.sleep(sleep_time)
 
 def extendActuator():
     GPIO.output(ACTUATOR_EXT, GPIO.LOW)
@@ -183,6 +225,5 @@ def retractActuator():
     time.sleep(5)
     GPIO.output(ACTUATOR_RET, GPIO.HIGH)
     wx.CallAfter(pub.sendMessage, "RETRACT_ACTUATOR", color = INACTIVE_COLOR)
-    time.sleep(2)
 
 # End of our states.
