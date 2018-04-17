@@ -12,24 +12,17 @@ from chocolate_factory import ChocolateFactory
 from state import State
 from wx.lib.pubsub import pub
 
-# The following variabes should be considered costants
-
-MAX_STEPS_EXTRUDER = 1000
-MAX_MOLDS = 6
-
 # GPIO pins
 ACTUATOR_EXT = 40
 ACTUATOR_RET = 38
 CHOC_PUMP_1 = 36
 CHOC_PUMP_2 = 32
-FILLING_EXT = 26
-FILLING_RET = 24
-CUT_EXT = 22
-CUT_RET = 18
-#16 12 ARE STILL AVAILABLE ON THE ONE SIDE
+#FILLING_EXT = 26
+#FILLING_RET = 24
+#CUT_EXT = 22
+#CUT_RET = 18
 
 ACTIVE_COLOR = '#42f48c'
-INACTIVE_COLOR = '#f7f7f7'
 
 class State(Enum):
     INIT = 1 
@@ -44,23 +37,25 @@ current_st = State.INIT
 
 runFactory = False
 factoryEvent = ''
+
 # Set numbering mode for the program
 GPIO.setmode(GPIO.BOARD)
 GPIO.setwarnings(False)
+
 # Setup the GPIO pins
 GPIO.setup(ACTUATOR_RET, GPIO.OUT)
 GPIO.setup(ACTUATOR_EXT, GPIO.OUT)
 GPIO.setup(CHOC_PUMP_1, GPIO.OUT)
-GPIO.setup(FILLING_EXT, GPIO.OUT)
-GPIO.setup(FILLING_RET, GPIO.OUT)
 GPIO.setup(CHOC_PUMP_2, GPIO.OUT)
+#GPIO.setup(FILLING_EXT, GPIO.OUT)
+#GPIO.setup(FILLING_RET, GPIO.OUT)
 
 GPIO.output(ACTUATOR_RET, GPIO.HIGH)
 GPIO.output(ACTUATOR_EXT, GPIO.HIGH)
 GPIO.output(CHOC_PUMP_1, GPIO.HIGH)
-GPIO.output(FILLING_EXT, GPIO.HIGH)
-GPIO.output(FILLING_RET, GPIO.HIGH)
 GPIO.output(CHOC_PUMP_2, GPIO.HIGH)
+#GPIO.output(FILLING_EXT, GPIO.HIGH)
+#GPIO.output(FILLING_RET, GPIO.HIGH)
 
 class Main(wx.Frame):
     #state = State()
@@ -78,10 +73,10 @@ class Main(wx.Frame):
         pub.subscribe(self.setRetractActuatorColor, "RETRACT_ACTUATOR")
         pub.subscribe(self.setRunChocPump1Color, "RUN_CHOC_PUMP_1")
         pub.subscribe(self.setRunChocPump2Color, "RUN_CHOC_PUMP_2")
-        pub.subscribe(self.setExtendWireColor, "EXTEND_WIRE")
-        pub.subscribe(self.setRetractWireColor, "RETRACT_WIRE")
-        pub.subscribe(self.setExtendExtruderColor, "EXTEND_EXTRUDER")
-        pub.subscribe(self.setRetractExtruderColor, "RETRACT_EXTRUDER")
+        #pub.subscribe(self.setExtendWireColor, "EXTEND_WIRE")
+        #pub.subscribe(self.setRetractWireColor, "RETRACT_WIRE")
+        #pub.subscribe(self.setExtendExtruderColor, "EXTEND_EXTRUDER")
+        #pub.subscribe(self.setRetractExtruderColor, "RETRACT_EXTRUDER")
             
     def InitUI(self):
         # Define All of the Buttons that need to be added
@@ -115,20 +110,20 @@ class Main(wx.Frame):
         self.Bind(wx.EVT_BUTTON, self.stopChocPump1, self.stopChocPump1_button)
 
         # Filling Extruder
-        self.extendExtruder_button = wx.Button(self, label="Extend Extruder")
-        self.Bind(wx.EVT_BUTTON, self.extendExtruder, self.extendExtruder_button)
-        self.retractExtruder_button = wx.Button(self, label="Retract Extruder")
-        self.Bind(wx.EVT_BUTTON, self.retractExtruder, self.retractExtruder_button)
-        self.stopExtruder_button = wx.Button(self, label="Stop Extruder")
-        self.Bind(wx.EVT_BUTTON, self.stopExtruder, self.stopExtruder_button)
+        #self.extendExtruder_button = wx.Button(self, label="Extend Extruder")
+        #self.Bind(wx.EVT_BUTTON, self.extendExtruder, self.extendExtruder_button)
+        #self.retractExtruder_button = wx.Button(self, label="Retract Extruder")
+        #self.Bind(wx.EVT_BUTTON, self.retractExtruder, self.retractExtruder_button)
+        #self.stopExtruder_button = wx.Button(self, label="Stop Extruder")
+        #self.Bind(wx.EVT_BUTTON, self.stopExtruder, self.stopExtruder_button)
 
         # Wire (Worm Gear)
-        self.extendWire_button = wx.Button(self, label="Extend Piano Wire")
-        self.Bind(wx.EVT_BUTTON, self.extendWire, self.extendWire_button)
-        self.retractWire_button = wx.Button(self, label="Retract Piano Wire")
-        self.Bind(wx.EVT_BUTTON, self.retractWire, self.retractWire_button)
-        self.stopWire_button = wx.Button(self, label="Stop Piano Wire")
-        self.Bind(wx.EVT_BUTTON, self.stopWire, self.stopWire_button)
+        #self.extendWire_button = wx.Button(self, label="Extend Piano Wire")
+        #self.Bind(wx.EVT_BUTTON, self.extendWire, self.extendWire_button)
+        #self.retractWire_button = wx.Button(self, label="Retract Piano Wire")
+        #self.Bind(wx.EVT_BUTTON, self.retractWire, self.retractWire_button)
+        #self.stopWire_button = wx.Button(self, label="Stop Piano Wire")
+        #self.Bind(wx.EVT_BUTTON, self.stopWire, self.stopWire_button)
 
         # Chocolate Pump 2
         self.runChocPump2_button = wx.Button(self, label="Run Choc. Pump 2")
@@ -143,27 +138,37 @@ class Main(wx.Frame):
         gs.AddMany( [
             (self.start_button, 0, wx.EXPAND),
             (self.finish_button, 0, wx.EXPAND),
+            (self.reset_button, 0, wx.EXPAND),
             (wx.StaticText(self), wx.EXPAND),
             (emergencyStop_button, 0, wx.EXPAND),
-            (self.reset_button, 0, wx.EXPAND),
+            
             # Second Row
             (self.extendActuator_button, 0, wx.EXPAND),
             (self.runChocPump1_button, 0, wx.EXPAND),
-            (self.extendExtruder_button, 0, wx.EXPAND),
-            (self.extendWire_button, 0, wx.EXPAND),
             (self.runChocPump2_button, 0, wx.EXPAND),
+            (wx.StaticText(self), wx.EXPAND),
+            (wx.StaticText(self), wx.EXPAND),
+            #(self.extendExtruder_button, 0, wx.EXPAND),
+            #(self.extendWire_button, 0, wx.EXPAND),
+            
             # Third Row
             (self.retractActuator_button, 0, wx.EXPAND),
             (wx.StaticText(self), wx.EXPAND),
-            (self.retractExtruder_button, 0, wx.EXPAND),
-            (self.retractWire_button, 0, wx.EXPAND),
             (wx.StaticText(self), wx.EXPAND),
+            (wx.StaticText(self), wx.EXPAND),
+            (wx.StaticText(self), wx.EXPAND),
+            #(self.retractExtruder_button, 0, wx.EXPAND),
+            #(self.retractWire_button, 0, wx.EXPAND),
+            
             # Fourth Row
             (self.stopActuator_button, 0, wx.EXPAND),
             (self.stopChocPump1_button, 0, wx.EXPAND),
-            (self.stopExtruder_button, 0, wx.EXPAND),
-            (self.stopWire_button, 0, wx.EXPAND),
-            (self.stopChocPump2_button, 0, wx.EXPAND) ])
+            (self.stopChocPump2_button, 0, wx.EXPAND),
+            (wx.StaticText(self), wx.EXPAND),
+            (wx.StaticText(self), wx.EXPAND)
+            #(self.stopExtruder_button, 0, wx.EXPAND),
+            #(self.stopWire_button, 0, wx.EXPAND),
+            ])
 
         vbox.Add(gs, proportion=1, flag=wx.EXPAND)
         self.SetSizer(vbox)
@@ -178,7 +183,6 @@ class Main(wx.Frame):
     # The following are the functions for changing the button colors
     #################################################################
     def setExtendActuatorColor(self, color):
-        print("Trying to change ext act color")
         self.extendActuator_button.SetBackgroundColour(color)
 
     def setRetractActuatorColor(self, color):
@@ -187,20 +191,17 @@ class Main(wx.Frame):
     def setRunChocPump1Color(self, color):
         self.runChocPump1_button.SetBackgroundColour(color)
 
-    def setExtendExtruderColor(self, color):
-        self.extendExtruder_button.SetBackgroundColour(color)
-
-    def setRetractExtruderColor(self, color):
-        self.retractExtruder_button.SetBackgroundColour(color)
-
-    def setExtendWireColor(self, color):
-        self.extendWire_button.SetBackgroundColour(color)
-
-    def setRetractWireColor(self, color):
-        self.retractWire_button.SetBackgroundColour(color)
-
     def setRunChocPump2Color(self, color):
-        self.runChocPump2_button.SetBackgroundColour(color)    
+        self.runChocPump2_button.SetBackgroundColour(color)
+        
+    #def setExtendExtruderColor(self, color):
+        #self.extendExtruder_button.SetBackgroundColour(color)
+    #def setRetractExtruderColor(self, color):
+        #self.retractExtruder_button.SetBackgroundColour(color)
+    #def setExtendWireColor(self, color):
+        #self.extendWire_button.SetBackgroundColour(color)
+    #def setRetractWireColor(self, color):
+        #self.retractWire_button.SetBackgroundColour(color)
 
     #################################################################
     # Functions to control individual components
@@ -208,14 +209,10 @@ class Main(wx.Frame):
     def extendActuator(self, event):
         GPIO.output(ACTUATOR_RET, GPIO.HIGH)
         GPIO.output(ACTUATOR_EXT, GPIO.LOW) 
-	#time.sleep(5) 
-	#GPIO.output(ACTUATOR_EXT, GPIO.HIGH)
 
     def retractActuator(self, event):
         GPIO.output(ACTUATOR_EXT, GPIO.HIGH)
         GPIO.output(ACTUATOR_RET, GPIO.LOW)
-        #time.sleep(5)
-        #GPIO.output(ACTUATOR_EXT, GPIO.HIGH)
 
     def stopActuator(self, event):
         GPIO.output(ACTUATOR_RET, GPIO.HIGH)
@@ -233,29 +230,18 @@ class Main(wx.Frame):
     def stopChocPump2(self, event):
         GPIO.output(CHOC_PUMP_2, GPIO.HIGH)
 
-    def extendExtruder(self, event):
-        # Have the stepper motor stop stepping
-        pass
-
-    def retractExtruder(self, event):
-        # Have the stepper motor retract all the way
-        pass
-
-    def stopExtruder(self, event):
-        # Have the stepper motor stop
-        pass
-
-    def extendWire(self, event):
-        GPIO.output(WIRE_RET, GPIO.HIGH)
-        GPIO.output(WIRE_EXT, GPIO.LOW)
-
-    def retractWire(self, event):
-        GPIO.output(WIRE_EXT, GPIO.HIGH)
-        GPIO.output(WIRE_RET, GPIO.LOW)
-
-    def stopWire(self, event):
-        GPIO.output(WIRE_EXT, GPIO.HIGH)
-        GPIO.output(WIRE_RET, GPIO.HIGH)
+    #def extendExtruder(self, event):        
+    #def retractExtruder(self, event):
+    #def stopExtruder(self, event):
+    #def extendWire(self, event):
+        #GPIO.output(WIRE_RET, GPIO.HIGH)
+        #GPIO.output(WIRE_EXT, GPIO.LOW)
+    #def retractWire(self, event):
+        #GPIO.output(WIRE_EXT, GPIO.HIGH)
+        #GPIO.output(WIRE_RET, GPIO.LOW)
+    #def stopWire(self, event):
+        #GPIO.output(WIRE_EXT, GPIO.HIGH)
+        #GPIO.output(WIRE_RET, GPIO.HIGH)
 
     def finish(self, event):
         global factoryEvent
@@ -268,11 +254,12 @@ class Main(wx.Frame):
         GPIO.output(ACTUATOR_EXT, GPIO.HIGH)
         GPIO.output(ACTUATOR_RET, GPIO.HIGH)
         GPIO.output(CHOC_PUMP_1, GPIO.HIGH)
-        GPIO.output(FILLING_EXT, GPIO.HIGH)
-        GPIO.output(FILLING_RET, GPIO.HIGH)
         GPIO.output(CHOC_PUMP_2, GPIO.HIGH)
-        GPIO.output(WIRE_EXT, GPIO.HIGH)
-        GPIO.output(WIRE_RET, GPIO.HIGH)
+        factoryEvent = "emergencyStop"
+        #GPIO.output(FILLING_EXT, GPIO.HIGH)
+        #GPIO.output(FILLING_RET, GPIO.HIGH)
+        #GPIO.output(WIRE_EXT, GPIO.HIGH)
+        #GPIO.output(WIRE_RET, GPIO.HIGH)
 
     def reset(self, event):
         pass
