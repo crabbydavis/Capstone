@@ -85,14 +85,14 @@ class FirstWarmUpState(State):
             firstWarmUpStageTime = stageTime - chocPump1RunTime - actuatorTotalTime
             extendActuator()
             if shouldStop == True:
-            	return InitState()
+				return InitState()
 			retractActuator()
-            if shouldStop == True:
-            	return InitState()
-            if shouldStop == True:
-            	return InitState()
+			if shouldStop == True:
+				return InitState()
 			runChocPump1()
-            time.sleep(firstWarmUpStageTime)
+            if shouldStop == True:
+				return InitState()
+			time.sleep(firstWarmUpStageTime)
             if ranFirstWarmUp == False:
                 ranFirstWarmUp = True
                 return FirstWarmUpState()
