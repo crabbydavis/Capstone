@@ -70,14 +70,17 @@ class InitState(State):
 class FirstWarmUpState(State):
     def on_event(self, event):
         global ranFirstWarmUp
-        print(stageTime)
         if event == 'emergencyStop':
             return InitState()
         else:
             firstWarmUpStageTime = stageTime - chocPump1RunTime - actuatorTotalTime
             extendActuator()
-            retractActuator()
-            runChocPump1()
+            if event == 'emergencyStop':
+            	return InitState()
+			retractActuator()
+            if event == 'emergencyStop':
+            	return InitState()
+			runChocPump1()
             time.sleep(firstWarmUpStageTime)
             if ranFirstWarmUp == False:
                 ranFirstWarmUp = True
@@ -95,9 +98,15 @@ class SecondWarmupState(State):
         else:
             secondWarmUpStageTime = stageTime - chocPump1RunTime - actuatorTotalTime
             extendActuator()
-            retractActuator()
-            runChocPump1()
-            #runFilling()
+            if event == 'emergencyStop':
+            	return InitState()
+			retractActuator()
+            if event == 'emergencyStop':
+				return InitState()
+			runChocPump1()
+            if event == 'emergencyStop':
+            	return InitState()
+#runFilling()
             time.sleep(secondWarmUpStageTime)
             if ranSecondWarmUp == False:
                 ranSecondWarmUp = True
@@ -111,10 +120,16 @@ class RunState(State):
         runStageTime = runTime - chocPump1RunTime - chocPump2RunTime - actuatorTotalTime
         if event == 'run':
             extendActuator()
+			if event == 'emergencyStop':
+				return InitState()
             retractActuator()
-            runChocPump1()
+            if event == 'emergencyStop':
+				return InitState()
+			runChocPump1()
             #runFilling()
-            runChocPump2()
+            if event == 'emergencyStop':
+				return InitState()
+			runChocPump2()
             time.sleep(runStageTime)
             return RunState()
         elif event == 'finish':
@@ -172,6 +187,9 @@ class StopState(State):
 #################################################################
 # Functions for running the chocolate processes of the machine
 #################################################################
+def checkForStop():
+	if event == 'emergencyStop':
+
 def runChocPump1():
     print("runChocPump1")
     GPIO.output(CHOC_PUMP_1, GPIO.LOW)
