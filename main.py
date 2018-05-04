@@ -256,6 +256,7 @@ class Main(wx.Frame):
         GPIO.output(CHOC_PUMP_1, GPIO.HIGH)
         GPIO.output(CHOC_PUMP_2, GPIO.HIGH)
         factoryEvent = "emergencyStop"
+        wx.CallAfter(pub.sendMessage, "EMERGENCY_STOP")
         #GPIO.output(FILLING_EXT, GPIO.HIGH)
         #GPIO.output(FILLING_RET, GPIO.HIGH)
         #GPIO.output(WIRE_EXT, GPIO.HIGH)

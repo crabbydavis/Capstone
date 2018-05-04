@@ -31,6 +31,7 @@ ranFirstWarmUp = False
 ranSecondWarmUp = False
 ranFirstCooldown = False
 ranSecondCooldown = False
+shouldStop = False
 
 # Set numbering mode for the program
 GPIO.setmode(GPIO.BOARD)
@@ -53,16 +54,22 @@ GPIO.output(CHOC_PUMP_2, GPIO.HIGH)
 
 # Start of our states
 class InitState(State):
-    global ranFirstWarmUp
-    global ranSecondWarmUp
-    global ranFirstCooldown
-    global ranSecodCooldown
+    
     def on_event(self, event):
+        global ranFirstWarmUp
+        global ranSecondWarmUp
+        global ranFirstCooldown
+        global ranSecodCooldown
+        global shouldStop
+
+        pub.subscribe(emergencyStop(), "EMERGENCY_STOP")
+
         if event == 'start':
             ranFirstWarmUp = False
             ranSecondWarmUp = False
             ranFirstCooldown = False
             ranSecodCooldown = False
+            shouldStop = False
             return FirstWarmUpState()
         return InitState()
 
@@ -70,15 +77,19 @@ class InitState(State):
 class FirstWarmUpState(State):
     def on_event(self, event):
         global ranFirstWarmUp
+        global shouldStop
+
         if event == 'emergencyStop':
             return InitState()
         else:
             firstWarmUpStageTime = stageTime - chocPump1RunTime - actuatorTotalTime
             extendActuator()
-            if event == 'emergencyStop':
+            if shouldStop == True:
             	return InitState()
 			retractActuator()
-            if event == 'emergencyStop':
+            if shouldStop == True:
+            	return InitState()
+            if shouldStop == True:
             	return InitState()
 			runChocPump1()
             time.sleep(firstWarmUpStageTime)
@@ -92,21 +103,22 @@ class FirstWarmUpState(State):
 class SecondWarmupState(State):
     def on_event(self, event):
         global ranSecondWarmUp
-        print(stageTime)
+        global shouldStop
+
         if event == 'emergencyStop':
             return InitState()
         else:
             secondWarmUpStageTime = stageTime - chocPump1RunTime - actuatorTotalTime
             extendActuator()
-            if event == 'emergencyStop':
+            if shouldStop == True:
             	return InitState()
 			retractActuator()
-            if event == 'emergencyStop':
+            if shouldStop == True:
 				return InitState()
 			runChocPump1()
-            if event == 'emergencyStop':
+            if shouldStop == True:
             	return InitState()
-#runFilling()
+            #runFilling()
             time.sleep(secondWarmUpStageTime)
             if ranSecondWarmUp == False:
                 ranSecondWarmUp = True
@@ -117,19 +129,22 @@ class SecondWarmupState(State):
 # Start of our states
 class RunState(State):
     def on_event(self, event):
+        global shouldStop
         runStageTime = runTime - chocPump1RunTime - chocPump2RunTime - actuatorTotalTime
         if event == 'run':
             extendActuator()
-			if event == 'emergencyStop':
+            if shouldStop == True:
 				return InitState()
             retractActuator()
-            if event == 'emergencyStop':
+            if shouldStop == True:
 				return InitState()
 			runChocPump1()
             #runFilling()
-            if event == 'emergencyStop':
+            if shouldStop == True:
 				return InitState()
 			runChocPump2()
+            if shouldStop == True:
+				return InitState()
             time.sleep(runStageTime)
             return RunState()
         elif event == 'finish':
@@ -187,8 +202,9 @@ class StopState(State):
 #################################################################
 # Functions for running the chocolate processes of the machine
 #################################################################
-def checkForStop():
-	if event == 'emergencyStop':
+def emergencyStop():
+    global shouldStop
+    shouldStop = True
 
 def runChocPump1():
     print("runChocPump1")
