@@ -4,12 +4,12 @@ from state import State
 import time
 import wx
 from wx.lib.pubsub import pub
-import RPi.GPIO as GPIO 
+#import RPi.#gpio as #gpio 
 
 ACTIVE_COLOR = '#42f48c'
 INACTIVE_COLOR = wx.NullColour
 
-# GPIO pins
+# #gpio pins
 ACTUATOR_EXT = 40
 ACTUATOR_RET = 38
 CHOC_PUMP_1 = 36
@@ -34,23 +34,23 @@ ranSecondCooldown = False
 shouldStop = False
 
 # Set numbering mode for the program
-GPIO.setmode(GPIO.BOARD)
-GPIO.setwarnings(False)
+#gpio.setmode(#gpio.BOARD)
+#gpio.setwarnings(False)
 
-# Setup the GPIO pins
-GPIO.setup(ACTUATOR_RET, GPIO.OUT)
-GPIO.setup(ACTUATOR_EXT, GPIO.OUT)
-GPIO.setup(CHOC_PUMP_1, GPIO.OUT)
-GPIO.setup(CHOC_PUMP_2, GPIO.OUT)
-#GPIO.setup(FILLING_EXT, GPIO.OUT)
-#GPIO.setup(FILLING_RET, GPIO.OUT)
+# Setup the #gpio pins
+#gpio.setup(ACTUATOR_RET, #gpio.OUT)
+#gpio.setup(ACTUATOR_EXT, #gpio.OUT)
+#gpio.setup(CHOC_PUMP_1, #gpio.OUT)
+#gpio.setup(CHOC_PUMP_2, #gpio.OUT)
+##gpio.setup(FILLING_EXT, #gpio.OUT)
+##gpio.setup(FILLING_RET, #gpio.OUT)
 
-GPIO.output(ACTUATOR_RET, GPIO.HIGH)
-GPIO.output(ACTUATOR_EXT, GPIO.HIGH)
-GPIO.output(CHOC_PUMP_1, GPIO.HIGH)
-GPIO.output(CHOC_PUMP_2, GPIO.HIGH)
-#GPIO.output(FILLING_EXT, GPIO.HIGH)
-#GPIO.output(FILLING_RET, GPIO.HIGH)
+#gpio.output(ACTUATOR_RET, #gpio.HIGH)
+#gpio.output(ACTUATOR_EXT, #gpio.HIGH)
+#gpio.output(CHOC_PUMP_1, #gpio.HIGH)
+#gpio.output(CHOC_PUMP_2, #gpio.HIGH)
+##gpio.output(FILLING_EXT, #gpio.HIGH)
+##gpio.output(FILLING_RET, #gpio.HIGH)
 
 # Start of our states
 class InitState(State):
@@ -85,14 +85,14 @@ class FirstWarmUpState(State):
             firstWarmUpStageTime = stageTime - chocPump1RunTime - actuatorTotalTime
             extendActuator()
             if shouldStop == True:
-				return InitState()
-			retractActuator()
-			if shouldStop == True:
-				return InitState()
-			runChocPump1()
+                return InitState()
+            retractActuator()
             if shouldStop == True:
-				return InitState()
-			time.sleep(firstWarmUpStageTime)
+                return InitState()
+            runChocPump1()
+            if shouldStop == True:
+                return InitState()
+            time.sleep(firstWarmUpStageTime)
             if ranFirstWarmUp == False:
                 ranFirstWarmUp = True
                 return FirstWarmUpState()
@@ -112,12 +112,12 @@ class SecondWarmupState(State):
             extendActuator()
             if shouldStop == True:
             	return InitState()
-			retractActuator()
+            retractActuator()
             if shouldStop == True:
-				return InitState()
-			runChocPump1()
+                return InitState()
+            runChocPump1()
             if shouldStop == True:
-            	return InitState()
+                return InitState()
             #runFilling()
             time.sleep(secondWarmUpStageTime)
             if ranSecondWarmUp == False:
@@ -134,17 +134,17 @@ class RunState(State):
         if event == 'run':
             extendActuator()
             if shouldStop == True:
-				return InitState()
+                return InitState()
             retractActuator()
             if shouldStop == True:
-				return InitState()
-			runChocPump1()
+                return InitState()
+            runChocPump1()
             #runFilling()
             if shouldStop == True:
-				return InitState()
-			runChocPump2()
+                return InitState()
+            runChocPump2()
             if shouldStop == True:
-				return InitState()
+                return InitState()
             time.sleep(runStageTime)
             return RunState()
         elif event == 'finish':
@@ -208,73 +208,73 @@ def emergencyStop():
 
 def runChocPump1():
     print("runChocPump1")
-    GPIO.output(CHOC_PUMP_1, GPIO.LOW)
+    #gpio.output(CHOC_PUMP_1, #gpio.LOW)
     wx.CallAfter(pub.sendMessage, "RUN_CHOC_PUMP_1", color = ACTIVE_COLOR)
     time.sleep(chocPump1RunTime) # Number of seconds that the pi will sleep
-    GPIO.output(CHOC_PUMP_1, GPIO.HIGH)
+    #gpio.output(CHOC_PUMP_1, #gpio.HIGH)
     wx.CallAfter(pub.sendMessage, "RUN_CHOC_PUMP_1", color = INACTIVE_COLOR)
 
 def runFilling():
     print("runFilling")
     fillingRunTime = .5
     cutTime = .2
-    GPIO.output(FILLING_EXT, GPIO.LOW)
+    #gpio.output(FILLING_EXT, #gpio.LOW)
     extendExtruder()
     extendWire()
     retractWire()
 
 def extendExtruder():
     print("In extendExtruder")
-    GPIO.output(ACTUATOR_RET, GPIO.HIGH)
+    #gpio.output(ACTUATOR_RET, #gpio.HIGH)
     wx.CallAfter(pub.sendMessage, "EXTEND_EXTRUDER", color = ACTIVE_COLOR)
     time.sleep(5)
-    GPIO.output(ACTUATOR_EXT, GPIO.HIGH)
+    #gpio.output(ACTUATOR_EXT, #gpio.HIGH)
     wx.CallAfter(pub.sendMessage, "EXTEND_EXTRUDER", color = INACTIVE_COLOR)
 
 def retractExtruder():
-    GPIO.output(ACTUATOR_RET, GPIO.HIGH)
+    #gpio.output(ACTUATOR_RET, #gpio.HIGH)
     wx.CallAfter(pub.sendMessage, "RETRACT_EXTRUDER", color = ACTIVE_COLOR)
     time.sleep(5)
-    GPIO.output(ACTUATOR_EXT, GPIO.HIGH)
+    #gpio.output(ACTUATOR_EXT, #gpio.HIGH)
     wx.CallAfter(pub.sendMessage, "RETRACT_EXTRUDER", color = INACTIVE_COLOR)
 
 def extendWire():
     print("In extendWire")
-    GPIO.output(ACTUATOR_RET, GPIO.HIGH)
+    #gpio.output(ACTUATOR_RET, #gpio.HIGH)
     wx.CallAfter(pub.sendMessage, "EXTEND_WIRE", color = ACTIVE_COLOR)
     time.sleep(5)
-    GPIO.output(ACTUATOR_EXT, GPIO.HIGH)
+    #gpio.output(ACTUATOR_EXT, #gpio.HIGH)
     wx.CallAfter(pub.sendMessage, "EXTEND_WIRE", color = INACTIVE_COLOR)
 
 def retractWire():
     print("In retractWire")
-    GPIO.output(ACTUATOR_RET, GPIO.HIGH)
+    #gpio.output(ACTUATOR_RET, #gpio.HIGH)
     wx.CallAfter(pub.sendMessage, "RETRACT_WIRE", color = ACTIVE_COLOR)
     time.sleep(5)
-    GPIO.output(ACTUATOR_EXT, GPIO.HIGH)
+    #gpio.output(ACTUATOR_EXT, #gpio.HIGH)
     wx.CallAfter(pub.sendMessage, "RETRACT_WIRE", color = INACTIVE_COLOR)
 
 def runChocPump2():
-    GPIO.output(CHOC_PUMP_2, GPIO.LOW)
+    #gpio.output(CHOC_PUMP_2, #gpio.LOW)
     wx.CallAfter(pub.sendMessage, "RUN_CHOC_PUMP_2", color = ACTIVE_COLOR)
     time.sleep(chocPump2RunTime) # Number of seconds that the pi will sleep
-    GPIO.output(CHOC_PUMP_2, GPIO.HIGH)
+    #gpio.output(CHOC_PUMP_2, #gpio.HIGH)
     wx.CallAfter(pub.sendMessage, "RUN_CHOC_PUMP_2", color = INACTIVE_COLOR)
 
 def extendActuator():
-    GPIO.output(ACTUATOR_EXT, GPIO.LOW)
+    #gpio.output(ACTUATOR_EXT, #gpio.LOW)
     # Tell the GUI about them
     wx.CallAfter(pub.sendMessage, "EXTEND_ACTUATOR", color = ACTIVE_COLOR)
     time.sleep(actuatorTime)
-    GPIO.output(ACTUATOR_EXT, GPIO.HIGH)
+    #gpio.output(ACTUATOR_EXT, #gpio.HIGH)
     wx.CallAfter(pub.sendMessage, "EXTEND_ACTUATOR", color = INACTIVE_COLOR)
     
 def retractActuator():
     print("retractActuator")
-    GPIO.output(ACTUATOR_RET, GPIO.LOW)
+    #gpio.output(ACTUATOR_RET, #gpio.LOW)
     wx.CallAfter(pub.sendMessage, "RETRACT_ACTUATOR", color = ACTIVE_COLOR)
     time.sleep(actuatorTime)
-    GPIO.output(ACTUATOR_RET, GPIO.HIGH)
+    #gpio.output(ACTUATOR_RET, #gpio.HIGH)
     wx.CallAfter(pub.sendMessage, "RETRACT_ACTUATOR", color = INACTIVE_COLOR)
 
 # End of our states.
