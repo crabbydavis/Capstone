@@ -5,14 +5,14 @@
 import wx
 import time
 from threading import Thread
-import RPi.GPIO as GPIO
+import RPi.gpio as gpio
 from enum import Enum
 from multiprocessing.pool import ThreadPool
 from chocolate_factory import ChocolateFactory
 from state import State
 from wx.lib.pubsub import pub
 
-# GPIO pins
+# gpio pins
 ACTUATOR_EXT = 40
 ACTUATOR_RET = 38
 CHOC_PUMP_1 = 36
@@ -39,23 +39,23 @@ runFactory = False
 factoryEvent = ''
 
 # Set numbering mode for the program
-GPIO.setmode(GPIO.BOARD)
-GPIO.setwarnings(False)
+gpio.setmode(gpio.BOARD)
+gpio.setwarnings(False)
 
-# Setup the GPIO pins
-GPIO.setup(ACTUATOR_RET, GPIO.OUT)
-GPIO.setup(ACTUATOR_EXT, GPIO.OUT)
-GPIO.setup(CHOC_PUMP_1, GPIO.OUT)
-GPIO.setup(CHOC_PUMP_2, GPIO.OUT)
-#GPIO.setup(FILLING_EXT, GPIO.OUT)
-#GPIO.setup(FILLING_RET, GPIO.OUT)
+# Setup the gpio pins
+gpio.setup(ACTUATOR_RET, gpio.OUT)
+gpio.setup(ACTUATOR_EXT, gpio.OUT)
+gpio.setup(CHOC_PUMP_1, gpio.OUT)
+gpio.setup(CHOC_PUMP_2, gpio.OUT)
+#gpio.setup(FILLING_EXT, gpio.OUT)
+#gpio.setup(FILLING_RET, gpio.OUT)
 
-GPIO.output(ACTUATOR_RET, GPIO.HIGH)
-GPIO.output(ACTUATOR_EXT, GPIO.HIGH)
-GPIO.output(CHOC_PUMP_1, GPIO.HIGH)
-GPIO.output(CHOC_PUMP_2, GPIO.HIGH)
-#GPIO.output(FILLING_EXT, GPIO.HIGH)
-#GPIO.output(FILLING_RET, GPIO.HIGH)
+gpio.output(ACTUATOR_RET, gpio.HIGH)
+gpio.output(ACTUATOR_EXT, gpio.HIGH)
+gpio.output(CHOC_PUMP_1, gpio.HIGH)
+gpio.output(CHOC_PUMP_2, gpio.HIGH)
+#gpio.output(FILLING_EXT, gpio.HIGH)
+#gpio.output(FILLING_RET, gpio.HIGH)
 
 class Main(wx.Frame):
     #state = State()
@@ -207,41 +207,48 @@ class Main(wx.Frame):
     # Functions to control individual components
     #################################################################
     def extendActuator(self, event):
-        GPIO.output(ACTUATOR_RET, GPIO.HIGH)
-        GPIO.output(ACTUATOR_EXT, GPIO.LOW) 
+        pass
+        gpio.output(ACTUATOR_RET, gpio.HIGH)
+        gpio.output(ACTUATOR_EXT, gpio.LOW) 
 
     def retractActuator(self, event):
-        GPIO.output(ACTUATOR_EXT, GPIO.HIGH)
-        GPIO.output(ACTUATOR_RET, GPIO.LOW)
+        pass
+        gpio.output(ACTUATOR_EXT, gpio.HIGH)
+        gpio.output(ACTUATOR_RET, gpio.LOW)
 
     def stopActuator(self, event):
-        GPIO.output(ACTUATOR_RET, GPIO.HIGH)
-        GPIO.output(ACTUATOR_EXT, GPIO.HIGH)
+        pass
+        gpio.output(ACTUATOR_RET, gpio.HIGH)
+        gpio.output(ACTUATOR_EXT, gpio.HIGH)
 
     def runChocPump1(self, event):
-        GPIO.output(CHOC_PUMP_1, GPIO.LOW)
+        pass
+        gpio.output(CHOC_PUMP_1, gpio.LOW)
 
     def stopChocPump1(self, event):
-        GPIO.output(CHOC_PUMP_1, GPIO.HIGH)
+        pass
+        gpio.output(CHOC_PUMP_1, gpio.HIGH)
 
     def runChocPump2(self, event):
-        GPIO.output(CHOC_PUMP_2, GPIO.LOW)
+        pass
+        gpio.output(CHOC_PUMP_2, gpio.LOW)
 
     def stopChocPump2(self, event):
-        GPIO.output(CHOC_PUMP_2, GPIO.HIGH)
+        pass
+        gpio.output(CHOC_PUMP_2, gpio.HIGH)
 
     #def extendExtruder(self, event):        
     #def retractExtruder(self, event):
     #def stopExtruder(self, event):
     #def extendWire(self, event):
-        #GPIO.output(WIRE_RET, GPIO.HIGH)
-        #GPIO.output(WIRE_EXT, GPIO.LOW)
+        #gpio.output(WIRE_RET, gpio.HIGH)
+        #gpio.output(WIRE_EXT, gpio.LOW)
     #def retractWire(self, event):
-        #GPIO.output(WIRE_EXT, GPIO.HIGH)
-        #GPIO.output(WIRE_RET, GPIO.LOW)
+        #gpio.output(WIRE_EXT, gpio.HIGH)
+        #gpio.output(WIRE_RET, gpio.LOW)
     #def stopWire(self, event):
-        #GPIO.output(WIRE_EXT, GPIO.HIGH)
-        #GPIO.output(WIRE_RET, GPIO.HIGH)
+        #gpio.output(WIRE_EXT, gpio.HIGH)
+        #gpio.output(WIRE_RET, gpio.HIGH)
 
     def finish(self, event):
         global factoryEvent
@@ -251,16 +258,16 @@ class Main(wx.Frame):
     # Do something here with killing the thread
     def emergencyStop(self, event):
         global factoryEvent
-        GPIO.output(ACTUATOR_EXT, GPIO.HIGH)
-        GPIO.output(ACTUATOR_RET, GPIO.HIGH)
-        GPIO.output(CHOC_PUMP_1, GPIO.HIGH)
-        GPIO.output(CHOC_PUMP_2, GPIO.HIGH)
+        gpio.output(ACTUATOR_EXT, gpio.HIGH)
+        gpio.output(ACTUATOR_RET, gpio.HIGH)
+        gpio.output(CHOC_PUMP_1, gpio.HIGH)
+        gpio.output(CHOC_PUMP_2, gpio.HIGH)
         factoryEvent = "emergencyStop"
         wx.CallAfter(pub.sendMessage, "EMERGENCY_STOP")
-        #GPIO.output(FILLING_EXT, GPIO.HIGH)
-        #GPIO.output(FILLING_RET, GPIO.HIGH)
-        #GPIO.output(WIRE_EXT, GPIO.HIGH)
-        #GPIO.output(WIRE_RET, GPIO.HIGH)
+        #gpio.output(FILLING_EXT, gpio.HIGH)
+        #gpio.output(FILLING_RET, gpio.HIGH)
+        #gpio.output(WIRE_EXT, gpio.HIGH)
+        #gpio.output(WIRE_RET, gpio.HIGH)
 
     def reset(self, event):
         pass
